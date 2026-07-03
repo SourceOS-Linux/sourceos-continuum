@@ -1,0 +1,41 @@
+# values.openshift.yaml — hardened defaults for OpenShift
+profile: openshift
+
+route:
+  enabled: true
+  host: shell.apps.example.com
+
+ingress:
+  enabled: false
+
+auth:
+  provider: openshift-oauth-proxy
+
+persistence:
+  enabled: true
+  storageClassName: ""   # e.g., ocs-storagecluster-cephfs
+  size: 10Gi
+  mountPath: /home/cloud
+
+rbac:
+  scope: namespace
+  defaultRole: cloudshell-view
+
+networkPolicy:
+  enabled: true
+
+security:
+  # OpenShift random UID: do not hardcode runAsUser.
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+  seccompProfile: RuntimeDefault
+  dropAllCapabilities: true
+
+spawner:
+  enabled: true
+  perUserPVC: true
+  perUserSA: true
+
+culler:
+  enabled: true
+  idleAfterMinutes: 60

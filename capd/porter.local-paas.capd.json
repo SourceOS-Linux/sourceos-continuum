@@ -1,0 +1,30 @@
+{
+  "capability_id": "caps.infra.paas.porter-local@0.1.0",
+  "kind": "infra.paas",
+  "status": "experimental",
+  "name": "Porter Local-First PaaS",
+  "description": "Local-first PaaS + agentic GitOps over kind/k3s (n=1 workstation tier). Deploys and runs workloads on-device; PR-driven GitOps, signed images, evidence bundles. This is the node that the HyperSwarm cluster scale-up wrapper scales UP from — Porter (local, n=1) → Scale-Up (cluster) → Cloud.",
+  "artifacts": {
+    "design": "docs/DESIGN.md",
+    "capability_list": "artifacts/prophet-capds/capds.yaml",
+    "cloudshell_chart": "charts/cloudshell",
+    "porter_shim": "artifacts/porter-shim"
+  },
+  "links": {
+    "integration_target": "https://github.com/SocioProphet/prophet-platform",
+    "workspace_governance": "https://github.com/SocioProphet/sociosphere",
+    "protocol_canonical": "https://github.com/SocioProphet/tritrpc",
+    "storage_standards": "https://github.com/SocioProphet/socioprophet-standards-storage",
+    "ontology_canonical": "https://github.com/SocioProphet/ontogenesis"
+  },
+  "composes_with": {
+    "scales_up_to": "caps.infra.cluster-scaleup.hyperswarm@0.1.0",
+    "scale_up_repo": "https://github.com/SocioProphet/hyperswarm-agent-composable-cluster-scaleup",
+    "note": "Same workload; Porter provisions it locally (kind/k3s), the scale-up wrapper pins upstream cluster toolchains (kubespray/krew/Cluster-API) to expand it — pinned, not vendored."
+  },
+  "policy": {
+    "local_first": true,
+    "evidence_emitting": true,
+    "supply_chain": "pin-not-vendor"
+  }
+}

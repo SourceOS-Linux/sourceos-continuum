@@ -1,0 +1,15 @@
+{{- if .Values.openshift.route.enabled }}
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: {{ include "cloudshell.fullname" . }}
+spec:
+  host: {{ .Values.openshift.route.host | quote }}
+  to:
+    kind: Service
+    name: {{ include "cloudshell.fullname" . }}-oauth2-proxy
+  port:
+    targetPort: http
+  tls:
+    termination: {{ .Values.openshift.route.tlsTermination | quote }}
+{{- end }}

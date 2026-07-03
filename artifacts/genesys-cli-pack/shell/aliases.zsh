@@ -1,0 +1,7 @@
+alias k='kubectl'
+alias h='helm'
+alias acd='argocd'
+alias logs='stern'
+alias j='jq'
+alias y='yq'
+alias prp='prophet'

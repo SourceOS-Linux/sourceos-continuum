@@ -1,0 +1,67 @@
+defaults:
+  runner: podman   # podman|toolbox (toolbx)
+  workdir_mount: true
+  home_mount: true
+
+notes:
+  - Prefer fully-open tooling and rootless Podman.
+  - If running on an immutable OS, use toolbx (containers/toolbox).
+
+categories:
+  platform:
+    - name: kubectl
+      image: ghcr.io/kubernetes/kubectl:latest
+    - name: helm
+      image: alpine/helm:3.14.4
+    - name: kustomize
+      image: ghcr.io/kubernetes-sigs/kustomize/kustomize:v5.4.1
+    - name: k9s
+      image: ""  # toolbx fallback
+    - name: argocd
+      image: quay.io/argoproj/argocd:latest
+      cmd: argocd
+    - name: stern
+      image: docker.io/stern/stern:latest
+
+  supply_chain:
+    - name: cosign
+      image: ghcr.io/sigstore/cosign/cosign:v2.2.4
+    - name: syft
+      image: ghcr.io/anchore/syft:latest
+    - name: trivy
+      image: docker.io/aquasec/trivy:latest
+    - name: crane
+      image: gcr.io/go-containerregistry/crane:latest
+    - name: oras
+      image: ghcr.io/oras-project/oras:1.2.0
+
+  gitops_dev:
+    - name: jq
+      image: docker.io/stedolan/jq:latest
+    - name: yq
+      image: ghcr.io/mikefarah/yq:latest
+    - name: ripgrep
+      image: ""  # toolbx fallback
+    - name: fd
+      image: ""  # toolbx fallback
+    - name: bat
+      image: ""  # toolbx fallback
+    - name: eza
+      image: ""  # toolbx fallback
+    - name: delta
+      image: ""  # toolbx fallback
+    - name: direnv
+      image: ""  # toolbx fallback
+    - name: just
+      image: ""  # toolbx fallback
+    - name: sops
+      image: ""  # toolbx fallback
+    - name: age
+      image: ""  # toolbx fallback
+
+  comm:
+    - name: lynx
+      image: ""  # toolbx fallback
+    - name: slacktee
+      image: ""  # toolbx fallback or local install
+

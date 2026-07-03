@@ -1,0 +1,33 @@
+apiVersion: capd.soc/v1
+kind: CapabilityList
+capabilities:
+  - name: porter.devshim.create
+    summary: Create an ephemeral LXC-backed dev workspace.
+    inputs:
+      - name: owner
+      - name: repo_url
+      - name: ref
+      - name: image
+      - name: size
+      - name: ttl_minutes
+      - name: features
+    outputs:
+      - name: workspace_id
+      - name: ssh_endpoint
+      - name: web_endpoint
+  - name: porter.devshim.snapshot
+    summary: Snapshot a workspace.
+    inputs:
+      - name: workspace_id
+      - name: label
+    outputs:
+      - name: snapshot_ref
+  - name: porter.devshim.extend
+    summary: Extend workspace TTL.
+    inputs:
+      - name: workspace_id
+      - name: ttl_minutes
+  - name: porter.devshim.delete
+    summary: Delete a workspace.
+    inputs:
+      - name: workspace_id

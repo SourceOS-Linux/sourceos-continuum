@@ -1,0 +1,83 @@
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  cloudShell: ghcr.io/your-org/cloud-shell@sha256:REPLACE
+  spawner: ghcr.io/your-org/cloudshell-spawner@sha256:REPLACE
+  culler: ghcr.io/your-org/cloudshell-culler@sha256:REPLACE
+  oauth2Proxy: quay.io/oauth2-proxy/oauth2-proxy:v7.6.0
+  gateway: nginx:1.27-alpine
+
+terminal:
+  backend: ttyd
+  port: 7681
+  homeMountPath: /home/cloud
+  # Run the shell container as this UID (satisfies runAsNonRoot for images that
+  # default to root, e.g. public ttyd). Empty = leave to the image.
+  runAsUser: ""
+
+spawner:
+  # Per-user shell spawner. Disable for single-user local dev (values.local.yaml).
+  enabled: true
+
+auth:
+  # For GitOps, do NOT keep secrets in values.yaml. Use ExternalSecrets or a pre-created Secret.
+  # OIDC via oauth2-proxy. Set enabled=false ONLY for local dev (values.local.yaml):
+  # the ingress then routes straight to the gateway with no authentication.
+  enabled: true
+  createSecret: false
+  existingSecretName: cloudshell-oauth2-proxy
+  oidcIssuerURL: https://dex.example.com
+  clientID: cloudshell
+  clientSecret: ""
+  cookieSecret: ""
+  cookieName: _cloudshell
+  emailDomains: ["*"]
+  extraArgs: []
+
+ingress:
+  enabled: true
+  className: nginx
+  host: shell.example.com
+  tls:
+    enabled: true
+    secretName: shell-tls
+  annotations: {}
+
+openshift:
+  route:
+    enabled: false
+    host: shell.apps.example.com
+    tlsTermination: edge
+
+persistence:
+  enabled: true
+  storageClassName: ""
+  size: 10Gi
+
+rbac:
+  namespaceScoped: true
+
+networkPolicy:
+  enabled: false
+
+resources:
+  cloudShell:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits:   { cpu: 500m, memory: 1Gi }
+  spawner:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits:   { cpu: 200m, memory: 256Mi }
+  culler:
+    requests: { cpu: 25m, memory: 64Mi }
+    limits:   { cpu: 100m, memory: 128Mi }
+  oauth2Proxy:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits:   { cpu: 200m, memory: 256Mi }
+  gateway:
+    requests: { cpu: 25m, memory: 64Mi }
+    limits:   { cpu: 200m, memory: 128Mi }
+
+culler:
+  enabled: true
+  idleAfterMinutes: 60

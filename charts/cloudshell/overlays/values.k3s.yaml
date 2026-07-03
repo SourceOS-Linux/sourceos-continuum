@@ -1,0 +1,9 @@
+ingress:
+  enabled: true
+  className: traefik
+  annotations:
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/websocket: "true"
+
+persistence:
+  storageClassName: topolvm-local-thin

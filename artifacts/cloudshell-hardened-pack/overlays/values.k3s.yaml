@@ -1,0 +1,39 @@
+# values.k3s.yaml — hardened defaults for k3s (Traefik or NGINX)
+profile: k3s
+
+ingress:
+  enabled: true
+  className: traefik
+  annotations:
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/websocket: "true"
+
+persistence:
+  enabled: true
+  storageClassName: topolvm-local-thin
+  size: 10Gi
+  mountPath: /home/cloud
+
+rbac:
+  # Prefer namespace scope for multi-tenant; cluster scope only if you must.
+  scope: namespace
+  defaultRole: cloudshell-view
+
+networkPolicy:
+  enabled: true
+  # WARNING: NetworkPolicy enforcement depends on CNI. If k3s uses flannel-only, this is not enforced.
+
+security:
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+  seccompProfile: RuntimeDefault
+  dropAllCapabilities: true
+
+spawner:
+  enabled: true
+  perUserPVC: true
+  perUserSA: true
+
+culler:
+  enabled: true
+  idleAfterMinutes: 60

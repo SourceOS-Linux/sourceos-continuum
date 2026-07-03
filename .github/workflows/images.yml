@@ -1,0 +1,48 @@
+name: build-and-push-images
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+env:
+  REGISTRY: ghcr.io
+  ORG: ${{ github.repository_owner }}
+  PLATFORMS: linux/amd64
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: docker/setup-qemu-action@v3
+    - uses: docker/setup-buildx-action@v3
+    - name: Login to GHCR
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build & push images
+      run: |
+        TAG=${GITHUB_SHA::7}
+        docker buildx build --platform $PLATFORMS --push -t $REGISTRY/$ORG/cloud-shell:$TAG -f artifacts/cloud-shell-image/Dockerfile artifacts/cloud-shell-image
+        docker buildx build --platform $PLATFORMS --push -t $REGISTRY/$ORG/cloudshell-spawner:$TAG -f artifacts/cloudshell-hardened-pack/spawner/Dockerfile .
+        docker buildx build --platform $PLATFORMS --push -t $REGISTRY/$ORG/cloudshell-culler:$TAG -f artifacts/cloudshell-hardened-pack/culler/Dockerfile .
+        docker buildx build --platform $PLATFORMS --push -t $REGISTRY/$ORG/porter-shim:$TAG -f artifacts/porter-shim/Dockerfile .
+
+    - name: Install cosign
+      uses: sigstore/cosign-installer@v3.6.0
+
+    - name: Cosign sign (keyless)
+      run: |
+        TAG=${GITHUB_SHA::7}
+        cosign sign --yes $REGISTRY/$ORG/cloud-shell:$TAG
+        cosign sign --yes $REGISTRY/$ORG/cloudshell-spawner:$TAG
+        cosign sign --yes $REGISTRY/$ORG/cloudshell-culler:$TAG
+        cosign sign --yes $REGISTRY/$ORG/porter-shim:$TAG

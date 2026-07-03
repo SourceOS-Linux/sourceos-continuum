@@ -1,0 +1,48 @@
+REGISTRY ?= ghcr.io
+ORG ?= your-org
+TAG ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo dev)
+PLATFORMS ?= linux/amd64
+
+IMG_CLOUDSHELL := $(REGISTRY)/$(ORG)/cloud-shell:$(TAG)
+IMG_SPAWNER   := $(REGISTRY)/$(ORG)/cloudshell-spawner:$(TAG)
+IMG_CULLER    := $(REGISTRY)/$(ORG)/cloudshell-culler:$(TAG)
+IMG_SHIM      := $(REGISTRY)/$(ORG)/porter-shim:$(TAG)
+
+.PHONY: help
+help:
+	@echo "Local-first PaaS:"
+	@echo "  make dev-up      one command → kind + ingress + Argo + Cloud Shell + porter-shim"
+	@echo "  make dev-down    tear down the local cluster"
+	@echo "  make shim-test   build + test the porter-shim (CGO_ENABLED=0)"
+	@echo ""
+	@echo "Images:"
+	@echo "  make push-all REGISTRY=... ORG=... TAG=..."
+	@echo "  make sign-all REGISTRY=... ORG=... TAG=..."
+	@echo ""
+	@echo "Note: Prefer digest pinning + GitOps promotion for production."
+
+.PHONY: dev-up
+dev-up:
+	./scripts/dev_up.sh
+
+.PHONY: dev-down
+dev-down:
+	./scripts/dev_down.sh
+
+.PHONY: shim-test
+shim-test:
+	cd artifacts/porter-shim && CGO_ENABLED=0 go vet ./... && CGO_ENABLED=0 go test ./...
+
+.PHONY: push-all
+push-all:
+	docker buildx build --platform $(PLATFORMS) --push -t $(IMG_CLOUDSHELL) -f artifacts/cloud-shell-image/Dockerfile artifacts/cloud-shell-image
+	docker buildx build --platform $(PLATFORMS) --push -t $(IMG_SPAWNER) -f artifacts/cloudshell-hardened-pack/spawner/Dockerfile .
+	docker buildx build --platform $(PLATFORMS) --push -t $(IMG_CULLER) -f artifacts/cloudshell-hardened-pack/culler/Dockerfile .
+	docker buildx build --platform $(PLATFORMS) --push -t $(IMG_SHIM) -f artifacts/porter-shim/Dockerfile .
+
+.PHONY: sign-all
+sign-all:
+	cosign sign --yes $(IMG_CLOUDSHELL)
+	cosign sign --yes $(IMG_SPAWNER)
+	cosign sign --yes $(IMG_CULLER)
+	cosign sign --yes $(IMG_SHIM)

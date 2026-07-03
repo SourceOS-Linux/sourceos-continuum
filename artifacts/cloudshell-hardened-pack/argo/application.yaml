@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: devtools-cloudshell
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://git.example.com/your/k3-cloud-shell.git
+    targetRevision: HEAD
+    path: k3-cloud-shell
+    helm:
+      valueFiles:
+        - overlays/values.k3s.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: devtools
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

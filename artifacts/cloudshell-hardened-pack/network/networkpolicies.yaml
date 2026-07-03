@@ -1,0 +1,51 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: devtools-default-deny
+  namespace: devtools
+spec:
+  podSelector: {}
+  policyTypes: ["Ingress","Egress"]
+  ingress: []
+  egress: []
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cloudshell-allow-ingress-from-ingress-controller
+  namespace: devtools
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: cloudshell
+  policyTypes: ["Ingress"]
+  ingress:
+  - from:
+    # Adjust selectors to match your ingress controller namespace/labels.
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: ingress-nginx
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cloudshell-allow-dns
+  namespace: devtools
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: cloudshell
+  policyTypes: ["Egress"]
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53

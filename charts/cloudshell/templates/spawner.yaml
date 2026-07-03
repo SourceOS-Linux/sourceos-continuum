@@ -1,0 +1,82 @@
+{{- if .Values.spawner.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "cloudshell.fullname" . }}-spawner
+  labels:
+    app.kubernetes.io/name: cloudshell-spawner
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app.kubernetes.io/name: cloudshell-spawner }
+  template:
+    metadata:
+      labels: { app.kubernetes.io/name: cloudshell-spawner }
+    spec:
+      serviceAccountName: {{ include "cloudshell.fullname" . }}-spawner
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+      - name: spawner
+        image: {{ .Values.image.spawner | quote }}
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: NAMESPACE
+          valueFrom: { fieldRef: { fieldPath: metadata.namespace } }
+        - name: SHELL_IMAGE
+          value: {{ .Values.image.cloudShell | quote }}
+        {{- if .Values.terminal.runAsUser }}
+        - name: SHELL_RUN_AS_USER
+          value: {{ .Values.terminal.runAsUser | quote }}
+        {{- end }}
+        ports:
+        - name: http
+          containerPort: 8080
+        resources: {{- toYaml .Values.resources.spawner | nindent 10 }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities: { drop: ["ALL"] }
+          runAsNonRoot: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "cloudshell.fullname" . }}-spawner
+spec:
+  selector: { app.kubernetes.io/name: cloudshell-spawner }
+  ports: [{ name: http, port: 80, targetPort: 8080 }]
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "cloudshell.fullname" . }}-spawner
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "cloudshell.fullname" . }}-spawner
+rules:
+- apiGroups: ["","apps","batch"]
+  resources: ["services","serviceaccounts","persistentvolumeclaims","pods","configmaps"]
+  verbs: ["get","list","watch","create","update","patch"]
+- apiGroups: ["apps"]
+  resources: ["deployments","replicasets"]
+  verbs: ["get","list","watch","create","update","patch"]
+- apiGroups: ["rbac.authorization.k8s.io"]
+  resources: ["roles","rolebindings"]
+  verbs: ["get","list","watch","create","update","patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "cloudshell.fullname" . }}-spawner
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "cloudshell.fullname" . }}-spawner
+subjects:
+- kind: ServiceAccount
+  name: {{ include "cloudshell.fullname" . }}-spawner
+  namespace: {{ .Release.Namespace }}
+{{- end }}

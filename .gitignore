@@ -11,3 +11,9 @@ node_modules/
 
 # OS cruft
 .DS_Store
+
+# Porter control-plane build outputs (compiled locally, not committed)
+artifacts/porter-shim/shim
+artifacts/cloudshell-hardened-pack/culler/culler
+artifacts/cloudshell-hardened-pack/spawner/spawner
+*.test

@@ -1,0 +1,20 @@
+flowchart TB
+  subgraph Inception[Inception Host]
+    B[Build & Attest
+Images/OS/SBOM] --> PR[(Pull Requests)]
+  end
+
+  subgraph Genesys[Genesys Host]
+    P[Policy + SRE Gates] -->|Approve| PR
+    CLI[Operator UX
+(WezTerm/tmux + Podman)] --> Prophet[Prophet CLI]
+  end
+
+  PR --> Argo[Argo CD Reconciler]
+  Argo --> Twin[K3 Digital Twin Runtime]
+
+  Prophet -->|CapDs| PR
+  Twin --> CloudShell[Cloud Shell
+(per-user spawner)]
+  Twin --> Porter[Porter PaaS
+(dev interface)]

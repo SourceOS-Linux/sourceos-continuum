@@ -1,0 +1,6 @@
+apiVersion: v2
+name: cloudshell
+description: Hardened per-user Cloud Shell (ttyd/Wetty) behind oauth2-proxy OIDC, with spawner + culler.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

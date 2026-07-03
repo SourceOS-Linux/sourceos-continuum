@@ -1,0 +1,19 @@
+stages: [build]
+
+variables:
+  DOCKER_DRIVER: overlay2
+  PLATFORMS: "linux/amd64"
+  TAG: "$CI_COMMIT_SHORT_SHA"
+
+build-and-push:
+  image: docker:27
+  services: [docker:27-dind]
+  stage: build
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+    - docker buildx create --use || true
+  script:
+    - docker buildx build --platform $PLATFORMS --push -t $CI_REGISTRY_IMAGE/cloud-shell:$TAG -f artifacts/cloud-shell-image/Dockerfile artifacts/cloud-shell-image
+    - docker buildx build --platform $PLATFORMS --push -t $CI_REGISTRY_IMAGE/cloudshell-spawner:$TAG -f artifacts/cloudshell-hardened-pack/spawner/Dockerfile .
+    - docker buildx build --platform $PLATFORMS --push -t $CI_REGISTRY_IMAGE/cloudshell-culler:$TAG -f artifacts/cloudshell-hardened-pack/culler/Dockerfile .
+    - docker buildx build --platform $PLATFORMS --push -t $CI_REGISTRY_IMAGE/porter-shim:$TAG -f artifacts/porter-shim/Dockerfile .

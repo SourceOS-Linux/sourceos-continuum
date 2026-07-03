@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudshell-spawner
+  namespace: devtools
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: cloudshell-spawner }
+  template:
+    metadata: { labels: { app: cloudshell-spawner } }
+    spec:
+      serviceAccountName: cloudshell-spawner
+      containers:
+      - name: spawner
+        image: ghcr.io/your-org/cloudshell-spawner:latest
+        env:
+        - name: NAMESPACE
+          value: devtools
+        - name: SHELL_IMAGE
+          value: ghcr.io/your-org/cloud-shell@sha256:REPLACE
+        ports:
+        - name: http
+          containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloudshell-spawner
+  namespace: devtools
+spec:
+  selector: { app: cloudshell-spawner }
+  ports: [{ name: http, port: 80, targetPort: 8080 }]
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cloudshell-spawner
+  namespace: devtools
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cloudshell-spawner
+rules:
+- apiGroups: ["", "apps", "batch"]
+  resources: ["services","serviceaccounts","persistentvolumeclaims","pods","configmaps"]
+  verbs: ["get","list","watch","create","update","patch"]
+- apiGroups: ["apps"]
+  resources: ["deployments","replicasets"]
+  verbs: ["get","list","watch","create","update","patch"]
+- apiGroups: ["rbac.authorization.k8s.io"]
+  resources: ["roles","rolebindings"]
+  verbs: ["get","list","watch","create","update","patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cloudshell-spawner
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cloudshell-spawner
+subjects:
+- kind: ServiceAccount
+  name: cloudshell-spawner
+  namespace: devtools

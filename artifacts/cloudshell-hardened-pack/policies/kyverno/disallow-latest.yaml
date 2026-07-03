@@ -1,0 +1,20 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: cloudshell-disallow-latest
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+  - name: no-latest-tag
+    match:
+      any:
+      - resources:
+          kinds: ["Pod","Deployment","ReplicaSet","StatefulSet","DaemonSet","Job","CronJob"]
+          namespaces: ["devtools"]
+    validate:
+      message: "Images must not use the :latest tag in devtools."
+      pattern:
+        spec:
+          containers:
+          - image: "!*:latest"

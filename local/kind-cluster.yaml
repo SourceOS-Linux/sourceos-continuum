@@ -1,0 +1,17 @@
+# Local-first PaaS cluster (kind). Ingress-ready: host ports 80/443 map to the
+# control-plane so ingress-nginx is reachable at http://localhost. One node is
+# enough for the dev loop; the same GitOps/policy semantics scale to k3s/k8s.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: prophet-paas
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+    extraPortMappings:
+      - { containerPort: 80, hostPort: 80, protocol: TCP }
+      - { containerPort: 443, hostPort: 443, protocol: TCP }

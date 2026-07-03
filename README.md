@@ -43,7 +43,19 @@ Holmes labs ──▶ lattice-forge ──▶ sourceos-continuum ──▶ hyper
 
 ## Interfaces
 - `make validate` — repo hygiene + CapD validity.
-- `make onboard` / `make dev-up` / `make test` / `make rollout` — lifecycle entry points (scaffold).
+- `make onboard` / `make test` / `make rollout` — lifecycle entry points (scaffold).
+- `make dev-up` / `make dev-down` / `make shim-test` — local PaaS control plane (delegates to `Makefile.porter`).
+
+## Control plane
+The Porter local-PaaS control plane is rehomed here as the owned implementation:
+- `artifacts/porter-shim/` — the control-plane shim (Go).
+- `artifacts/cloudshell-hardened-pack/` — hardened Cloud Shell (spawner + culler).
+- `artifacts/genesys-cli-pack/`, `artifacts/lxc-dev-shim-pack/` — operator + workspace tooling.
+- `charts/cloudshell/` — Helm chart (Cloud Shell + oauth2-proxy + gateway + spawner/culler).
+- `local/`, `scripts/`, `templates/` — local bring-up + operator scripts.
+- `Makefile.porter` — control-plane targets (dev-up/dev-down/shim-test/push-all/sign-all).
+- `capd/porter.local-paas.capd.json` — the `caps.infra.paas.porter-local` descriptor, composed by continuum.
+Compiled binaries (shim, culler, spawner) are gitignored — build locally.
 
 ## Truth hierarchy
 - Integration target: `SocioProphet/prophet-platform`

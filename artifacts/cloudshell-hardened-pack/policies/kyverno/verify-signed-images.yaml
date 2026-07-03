@@ -1,0 +1,27 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: cloudshell-require-signed-images
+spec:
+  validationFailureAction: Audit   # start in Audit; switch to Enforce after signing pipeline is live
+  background: true
+  rules:
+  - name: verify-cloudshell-images
+    match:
+      any:
+      - resources:
+          kinds: ["Pod","Deployment","ReplicaSet","StatefulSet","DaemonSet","Job","CronJob"]
+          namespaces: ["devtools"]
+    verifyImages:
+    - imageReferences:
+      # Replace with your pinned images (digests recommended)
+      - "ghcr.io/your-org/cloud-shell@*"
+      - "quay.io/oauth2-proxy/oauth2-proxy@*"
+      attestors:
+      - entries:
+        - keys:
+            publicKeys: |
+              -----BEGIN PUBLIC KEY-----
+              REPLACE_WITH_YOUR_COSIGN_PUBLIC_KEY
+              -----END PUBLIC KEY-----
+      required: true

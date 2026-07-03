@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "cloudshell.fullname" . }}-shared
+  labels:
+    app.kubernetes.io/name: cloudshell
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cloudshell
+      cloudshell/mode: shared
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cloudshell
+        cloudshell/mode: shared
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        {{- if .Values.terminal.runAsUser }}
+        runAsUser: {{ .Values.terminal.runAsUser }}
+        fsGroup: {{ .Values.terminal.runAsUser }}
+        {{- end }}
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+      - name: shell
+        image: {{ .Values.image.cloudShell | quote }}
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: {{ .Values.terminal.port }}
+        resources: {{- toYaml .Values.resources.cloudShell | nindent 10 }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities: { drop: ["ALL"] }
+          runAsNonRoot: true
+        volumeMounts:
+        - name: home
+          mountPath: {{ .Values.terminal.homeMountPath | quote }}
+      volumes:
+      - name: home
+        {{- if .Values.persistence.enabled }}
+        persistentVolumeClaim:
+          claimName: {{ include "cloudshell.fullname" . }}-shared-home
+        {{- else }}
+        emptyDir: {}
+        {{- end }}

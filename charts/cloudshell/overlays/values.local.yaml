@@ -1,0 +1,41 @@
+# Local-first profile — kind/k3d, no cloud dependencies.
+# - auth OFF (ingress → gateway directly; no OIDC/dex needed for local dev)
+# - public ttyd image (no registry/build required to get a working shell)
+# - kind's default `standard` storage class; small footprint; netpol off
+# Apply: helm upgrade --install cloudshell ./charts/cloudshell -n devtools -f charts/cloudshell/overlays/values.local.yaml
+image:
+  cloudShell: tsl0922/ttyd:1.7.7                     # also the per-user shell image the spawner launches
+  gateway: nginxinc/nginx-unprivileged:1.27-alpine   # non-root (uid 101, listens :8080) → passes runAsNonRoot
+  spawner: localhost/cloudshell-spawner:dev          # locally built + kind-loaded
+  culler: localhost/cloudshell-culler:dev
+
+auth:
+  enabled: false          # local dev: no OIDC; ingress routes straight to the gateway
+
+terminal:
+  runAsUser: 1000         # public ttyd defaults to root; run as non-root for PSS
+
+# Per-user Cloud Shell: the spawner creates an isolated shell (SA/PVC/Deploy/Svc)
+# per OIDC identity; the gateway routes /u/<uid>/ to it. Images are built locally
+# by dev_up (or `make images`) and loaded into kind.
+spawner:
+  enabled: true
+
+ingress:
+  enabled: true
+  className: nginx
+  host: localhost
+  tls:
+    enabled: false
+
+persistence:
+  enabled: true
+  storageClassName: standard   # kind's default local-path provisioner
+  size: 2Gi
+
+networkPolicy:
+  enabled: false
+
+culler:
+  enabled: true
+  idleAfterMinutes: 120    # reclaim idle per-user shells

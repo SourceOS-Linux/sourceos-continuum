@@ -1,0 +1,44 @@
+apiVersion: capd.soc/v1
+kind: CapabilityList
+capabilities:
+  - name: porter.release.publish
+    summary: Publish an application release via PR-driven GitOps.
+    inputs: [service, env, image_digest, chart_version]
+    outputs: [pr_url, evidence_bundle]
+    guards: [signed_images, policy_pass, sre_gate_pass]
+
+  - name: twin.cloudshell.install
+    summary: Install/upgrade Cloud Shell on the K3 Twin via Helm + Argo.
+    inputs: [cluster, namespace, values_profile]
+    outputs: [argo_app, evidence_bundle]
+    guards: [policy_pass]
+
+  - name: twin.cloudshell.spawn
+    summary: Spawn/reuse per-user Cloud Shell instance (OIDC identity → per-user resources).
+    inputs: [user, repo, ref, cmd, size]
+    outputs: [shell_url, workspace_id]
+    guards: [quota_ok, rbac_ok]
+
+  - name: inception.os.publish
+    summary: Publish a new OS image to the update channel (rpm-ostree style) with signatures.
+    inputs: [channel, version, commit, signature]
+    outputs: [channel_update_ref, evidence_bundle]
+    guards: [signature_valid]
+
+  - name: genesys.os.promote
+    summary: Promote OS version across a fleet with drain/rollback gates.
+    inputs: [fleet_selector, version]
+    outputs: [progress_report]
+    guards: [sre_gate_pass, capacity_ok]
+
+  - name: porter.devshim.create
+    summary: Create an LXC dev workspace through Genesys gateway.
+    inputs: [owner, repo_url, ref, size, ttl]
+    outputs: [workspace_id, endpoint]
+    guards: [quota_ok, sso_required]
+
+  - name: tools.compose.kompose.convert
+    summary: Convert compose.yaml → Kubernetes manifests and open PR.
+    inputs: [repo, compose_path]
+    outputs: [pr_url]
+    guards: [lint_pass, policy_pass]

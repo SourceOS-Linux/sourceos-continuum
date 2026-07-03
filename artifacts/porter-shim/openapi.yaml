@@ -1,0 +1,83 @@
+openapi: 3.0.3
+info:
+  title: Porter Shim API
+  version: 0.1.0
+paths:
+  /healthz:
+    get:
+      responses:
+        "200": { description: ok }
+
+  /release/publish:
+    post:
+      summary: Publish an application release via PR-driven GitOps
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [service, env, image_digest]
+              properties:
+                service: { type: string }
+                env: { type: string }
+                image_digest: { type: string, description: "repo@sha256:..." }
+                chart_version: { type: string }
+      responses:
+        "200":
+          description: created PR
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pr_url: { type: string }
+                  evidence_bundle: { type: object }
+
+  /compose/kompose/convert:
+    post:
+      summary: Convert compose.yaml to K8s manifests and open PR
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [repo, compose_path]
+              properties:
+                repo: { type: string }
+                compose_path: { type: string }
+      responses:
+        "200":
+          description: created PR
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pr_url: { type: string }
+
+  /cloudshell/launch:
+    post:
+      summary: Launch/reuse per-user Cloud Shell (calls spawner after auth)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                repo: { type: string }
+                ref: { type: string }
+                cmd: { type: string }
+                size: { type: string, enum: [s,m,l] }
+      responses:
+        "200":
+          description: shell ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  shell_url: { type: string }
+                  workspace_id: { type: string }

@@ -1,0 +1,61 @@
+{{- if .Values.culler.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "cloudshell.fullname" . }}-culler
+  labels:
+    app.kubernetes.io/name: cloudshell-culler
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app.kubernetes.io/name: cloudshell-culler }
+  template:
+    metadata:
+      labels: { app.kubernetes.io/name: cloudshell-culler }
+    spec:
+      serviceAccountName: {{ include "cloudshell.fullname" . }}-culler
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+      - name: culler
+        image: {{ .Values.image.culler | quote }}
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: NAMESPACE
+          valueFrom: { fieldRef: { fieldPath: metadata.namespace } }
+        - name: IDLE_AFTER_MINUTES
+          value: {{ .Values.culler.idleAfterMinutes | quote }}
+        resources: {{- toYaml .Values.resources.culler | nindent 10 }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities: { drop: ["ALL"] }
+          runAsNonRoot: true
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "cloudshell.fullname" . }}-culler
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "cloudshell.fullname" . }}-culler
+rules:
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get","list","watch","delete","patch","update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "cloudshell.fullname" . }}-culler
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "cloudshell.fullname" . }}-culler
+subjects:
+- kind: ServiceAccount
+  name: {{ include "cloudshell.fullname" . }}-culler
+  namespace: {{ .Release.Namespace }}
+{{- end }}

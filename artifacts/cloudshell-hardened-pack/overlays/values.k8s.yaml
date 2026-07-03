@@ -1,0 +1,37 @@
+# values.k8s.yaml — hardened defaults for vanilla Kubernetes (NGINX)
+profile: kubernetes
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+
+persistence:
+  enabled: true
+  storageClassName: standard
+  size: 10Gi
+  mountPath: /home/cloud
+
+rbac:
+  scope: namespace
+  defaultRole: cloudshell-view
+
+networkPolicy:
+  enabled: true
+
+security:
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+  seccompProfile: RuntimeDefault
+  dropAllCapabilities: true
+
+spawner:
+  enabled: true
+  perUserPVC: true
+  perUserSA: true
+
+culler:
+  enabled: true
+  idleAfterMinutes: 60

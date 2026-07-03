@@ -1,0 +1,29 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: cloudshell-pod-security-baseline
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+  - name: enforce-baseline-securitycontext
+    match:
+      any:
+      - resources:
+          kinds: ["Pod","Deployment","ReplicaSet","StatefulSet","DaemonSet","Job","CronJob"]
+          namespaces: ["devtools"]
+    validate:
+      message: "Pods in devtools must run non-root, drop caps, disallow priv-esc, and use RuntimeDefault seccomp."
+      pattern:
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+          - name: "*"
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: ["ALL"]
+              runAsNonRoot: true

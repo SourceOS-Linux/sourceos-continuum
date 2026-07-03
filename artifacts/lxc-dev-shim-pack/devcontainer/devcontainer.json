@@ -1,0 +1,9 @@
+{
+  "name": "LXC Dev Shim",
+  "runArgs": [
+    "--privileged",
+    "--cap-add=SYS_ADMIN",
+    "--security-opt=apparmor:unconfined"
+  ],
+  "postStartCommand": "bash /workspaces/.devcontainer/postStart.sh"
+}
