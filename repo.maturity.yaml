@@ -1,0 +1,38 @@
+schemaVersion: repo-maturity.v1
+repository: SourceOS-Linux/sourceos-continuum
+plane: sourceos-continuum
+status: experimental
+canonicality: canonical
+owners:
+  - SourceOS-Linux
+maturity:
+  level: M0
+  targetLevel: M3
+  evidence:
+    - README.md defines the OS-layer local-first PaaS scope and owned/non-owned surfaces.
+    - docs/LIFECYCLE.md defines the onboard→test→rollout developer continuum.
+    - capd/continuum.local-paas.capd.json declares the caps.infra.paas.continuum-local capability.
+validation:
+  commands:
+    - make validate
+  ciRequired: true
+  lastKnownStatus: unknown
+integrations:
+  - repository: SourceOS-Linux/sourceos-devtools
+    relationship: first-class operator surface (sourceosctl) targeted by the local PaaS
+    required: true
+  - repository: SourceOS-Linux/sourceos-spec
+    relationship: consume canonical schemas
+    required: true
+  - repository: SocioProphet/sociosphere
+    relationship: consume workspace manifest + source→workspace binding governance
+    required: true
+  - repository: SocioProphet/lattice-forge
+    relationship: consume governed signed RuntimeAssets for deployment
+    required: true
+  - repository: SocioProphet/hyperswarm-agent-composable-cluster-scaleup
+    relationship: scale-up cluster primitives (pinned, not vendored)
+    required: false
+  - repository: SocioProphet/prophet-platform
+    relationship: platform integration target
+    required: true

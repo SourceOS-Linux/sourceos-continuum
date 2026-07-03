@@ -1,0 +1,31 @@
+{
+  "capability_id": "caps.infra.paas.continuum-local@0.1.0",
+  "kind": "infra.paas",
+  "status": "experimental",
+  "name": "SourceOS Continuum — OS-layer Local-First PaaS",
+  "description": "OS-layer local-first PaaS control plane owning the developer continuum: onboard, develop, cloud-native test, and rollout, over kind/k3s. Targets sourceos-devtools/sourceosctl as the first-class operator surface; deploys governed RuntimeAssets released by lattice-forge; scales up to a composable HyperSwarm cluster.",
+  "artifacts": {
+    "lifecycle": "docs/LIFECYCLE.md",
+    "scope": "docs/CONTINUUM_SCOPE.md",
+    "validate": "tools/validate.py"
+  },
+  "links": {
+    "integration_target": "https://github.com/SocioProphet/prophet-platform",
+    "workspace_governance": "https://github.com/SocioProphet/sociosphere",
+    "protocol_canonical": "https://github.com/SocioProphet/tritrpc",
+    "storage_standards": "https://github.com/SocioProphet/socioprophet-standards-storage",
+    "ontology_canonical": "https://github.com/SocioProphet/ontogenesis"
+  },
+  "composes_with": {
+    "operator_surface": "SourceOS-Linux/sourceos-devtools",
+    "control_plane_primitives": "caps.infra.paas.porter-local@0.1.0",
+    "runtime_release": "SocioProphet/lattice-forge",
+    "workspace_controller": "SocioProphet/sociosphere",
+    "scales_up_to": "caps.infra.cluster-scaleup.hyperswarm@0.1.0"
+  },
+  "policy": {
+    "local_first": true,
+    "evidence_emitting": true,
+    "supply_chain": "pin-not-vendor"
+  }
+}

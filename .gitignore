@@ -1,0 +1,13 @@
+# Pinned upstreams are fetched, not vendored (supply-chain: pin-not-vendor).
+third_party/
+
+# Build / runtime
+dist/
+build/
+*.pyc
+__pycache__/
+.venv/
+node_modules/
+
+# OS cruft
+.DS_Store
