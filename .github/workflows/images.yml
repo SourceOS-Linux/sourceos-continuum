@@ -28,6 +28,11 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Normalize org to lowercase
+      # ghcr.io/OCI repository names must be lowercase; github.repository_owner
+      # can be mixed-case (e.g. SourceOS-Linux). Lowercase it for all image tags.
+      run: echo "ORG=$(printf '%s' "$ORG" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
+
     - name: Build & push images
       run: |
         TAG=${GITHUB_SHA::7}
