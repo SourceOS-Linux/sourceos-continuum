@@ -30,6 +30,11 @@ Targets: `SocioProphet/lattice-forge`, GitOps checks.
 
 ## 4. Rollout
 Promote the proven workload up and out.
+- Promotion gate: promotion requires an `APPROVE` review verdict from the review gate consumed
+  from `prophet-platform` (this repo's CapD `links.integration_target`; pin-not-vendor).
+  `tools/promotion_gate.py` verifies the verdict's seal and, fail-closed, blocks on anything but
+  APPROVE. Every decision — allow or block — is emitted to the per-action evidence bundle under
+  `artifacts/gate-decisions/` (policy `evidence_emitting`).
 - Promote local → composable cluster via the pinned scale-up wrapper
   (`caps.infra.cluster-scaleup.hyperswarm`).
 - Signed images, drain/rollback gates, promotion evidence.

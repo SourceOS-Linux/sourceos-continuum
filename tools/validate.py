@@ -18,6 +18,7 @@ REQUIRED = [
     "docs/LIFECYCLE.md",
     "docs/CONTINUUM_SCOPE.md",
     "capd/continuum.local-paas.capd.json",
+    "tools/promotion_gate.py",
 ]
 CAPD_KEYS = ("capability_id", "kind", "status", "links", "composes_with", "policy")
 
