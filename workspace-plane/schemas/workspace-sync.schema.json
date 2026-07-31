@@ -1,0 +1,253 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/workspace-sync.schema.json",
+  "title": "WorkspaceSync v0alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "apiVersion",
+    "kind",
+    "workspaceId",
+    "graphDigest",
+    "roots"
+  ],
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "authorityClass": {
+      "type": "string",
+      "enum": [
+        "local_authoritative",
+        "remote_authoritative",
+        "derived",
+        "immutable_injected",
+        "agent_emulated"
+      ]
+    },
+    "syncMode": {
+      "type": "string",
+      "enum": [
+        "mirror",
+        "pull",
+        "shared_manual",
+        "none"
+      ]
+    },
+    "changeOp": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "root",
+        "seq",
+        "side",
+        "kind",
+        "path"
+      ],
+      "properties": {
+        "root": {
+          "type": "string"
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "side": {
+          "type": "string",
+          "enum": [
+            "local",
+            "remote"
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "upsert",
+            "delete",
+            "rename",
+            "chmod",
+            "mkdir",
+            "symlink"
+          ]
+        },
+        "path": {
+          "type": "string"
+        },
+        "oldPath": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "baseDigest": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "newDigest": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "executable": {
+              "type": "boolean"
+            },
+            "symlinkTarget": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "size": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      }
+    }
+  },
+  "properties": {
+    "apiVersion": {
+      "const": "workspaces.dev/v0alpha1"
+    },
+    "kind": {
+      "const": "WorkspaceSync"
+    },
+    "workspaceId": {
+      "type": "string"
+    },
+    "graphDigest": {
+      "$ref": "#/$defs/digest"
+    },
+    "roots": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source",
+          "authority",
+          "mode"
+        ],
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "authority": {
+            "$ref": "#/$defs/authorityClass"
+          },
+          "mode": {
+            "$ref": "#/$defs/syncMode"
+          },
+          "include": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "exclude": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "bootstrap": {
+            "type": "string",
+            "enum": [
+              "content-addressed-snapshot",
+              "full-scan"
+            ]
+          },
+          "delta": {
+            "type": "string",
+            "enum": [
+              "journaled",
+              "full-scan"
+            ]
+          },
+          "deletePropagation": {
+            "type": "boolean"
+          },
+          "chmodPolicy": {
+            "type": "string",
+            "enum": [
+              "exec-bit-only",
+              "preserve",
+              "ignore"
+            ]
+          },
+          "symlinkPolicy": {
+            "type": "string",
+            "enum": [
+              "safe-relative-only",
+              "deny",
+              "allow"
+            ]
+          },
+          "conflictPolicy": {
+            "type": "string",
+            "enum": [
+              "authoritative-wins-with-shadow",
+              "manual-merge",
+              "deny-on-divergence"
+            ]
+          },
+          "checkpoints": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "everyOps": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "everySeconds": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    "protocol": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "phases": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "negotiate",
+              "seed",
+              "watch",
+              "journal",
+              "apply",
+              "ack",
+              "checkpoint"
+            ]
+          }
+        },
+        "changeOp": {
+          "$ref": "#/$defs/changeOp"
+        }
+      }
+    }
+  }
+}

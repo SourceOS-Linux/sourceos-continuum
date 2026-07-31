@@ -1,0 +1,30 @@
+version: v0
+language: java
+lockfiles:
+- pom.xml
+- gradle.lockfile
+- build.gradle
+- settings.gradle
+local_authoritative:
+- src/**
+- .devcontainer/**
+- pom.xml
+- build.gradle*
+- settings.gradle*
+remote_authoritative:
+- .m2/**
+- .gradle/**
+derived:
+- target/**
+- build/**
+- .idea/**
+refresh_tasks:
+  on_lockfile_change:
+  - ./scripts/bootstrap-java-deps.sh
+  post_attach:
+  - ./mvnw -q -DskipTests verify || ./gradlew test || true
+debug:
+  adapters:
+  - jdwp
+  ports:
+  - 5005

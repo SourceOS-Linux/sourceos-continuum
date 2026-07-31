@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/evidence-record.schema.json",
+  "title": "WorkspaceEvidence v0alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "apiVersion",
+    "kind",
+    "workspaceId",
+    "graphDigest",
+    "sessionId",
+    "records"
+  ],
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "timestamp",
+        "stage",
+        "severity",
+        "code",
+        "message"
+      ],
+      "properties": {
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "stage": {
+          "type": "string",
+          "enum": [
+            "ingest",
+            "normalize",
+            "classify",
+            "realize",
+            "attach",
+            "sync",
+            "policy",
+            "evidence"
+          ]
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "info",
+            "warning",
+            "error"
+          ]
+        },
+        "code": {
+          "type": "string",
+          "pattern": "^[EIW]_[A-Z0-9_]+$"
+        },
+        "message": {
+          "type": "string"
+        },
+        "subject": {
+          "type": "string"
+        },
+        "data": {
+          "type": "object"
+        }
+      }
+    }
+  },
+  "properties": {
+    "apiVersion": {
+      "const": "workspaces.dev/v0alpha1"
+    },
+    "kind": {
+      "const": "WorkspaceEvidence"
+    },
+    "workspaceId": {
+      "type": "string"
+    },
+    "graphDigest": {
+      "$ref": "#/$defs/digest"
+    },
+    "sessionId": {
+      "type": "string"
+    },
+    "records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/record"
+      }
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "Ledger Dev",
+  "image": "ghcr.io/acme/ledger-dev:latest",
+  "remoteUser": "vscode",
+  "workspaceFolder": "/workspaces/ledger",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/ledger,type=bind",
+  "forwardPorts": [
+    8000,
+    5678,
+    5432
+  ],
+  "initializeCommand": "./scripts/preflight.sh",
+  "onCreateCommand": "./scripts/bootstrap.sh",
+  "updateContentCommand": "./scripts/refresh-if-lockfiles-changed.sh",
+  "postCreateCommand": "./scripts/post-create.sh",
+  "postStartCommand": "./scripts/post-start.sh",
+  "postAttachCommand": "./scripts/post-attach.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.debugpy"
+      ]
+    }
+  }
+}

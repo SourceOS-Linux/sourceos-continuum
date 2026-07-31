@@ -1,0 +1,53 @@
+{
+  "status": "ok",
+  "checks": [
+    {
+      "schema": "workspace.agent",
+      "file": "examples/node-postgres/workspace.agent.yaml",
+      "valid": true,
+      "errors": []
+    },
+    {
+      "schema": "workspace.graph",
+      "file": "examples/node-postgres/workspace-graph.yaml",
+      "valid": true,
+      "errors": []
+    },
+    {
+      "schema": "workspace.sync",
+      "file": "examples/node-postgres/workspace-sync.yaml",
+      "valid": true,
+      "errors": []
+    },
+    {
+      "schema": "workspace.evidence",
+      "file": "examples/node-postgres/evidence-record.json",
+      "valid": true,
+      "errors": []
+    },
+    {
+      "schema": "workspace.agent",
+      "file": "examples/python-fastapi-postgres/workspace.agent.yaml",
+      "valid": true,
+      "errors": []
+    },
+    {
+      "schema": "workspace.graph",
+      "file": "examples/python-fastapi-postgres/workspace-graph.yaml",
+      "valid": true,
+      "errors": []
+    },
+    {
+      "schema": "workspace.sync",
+      "file": "examples/python-fastapi-postgres/workspace-sync.yaml",
+      "valid": true,
+      "errors": []
+    },
+    {
+      "schema": "workspace.evidence",
+      "file": "examples/python-fastapi-postgres/evidence-record.json",
+      "valid": true,
+      "errors": []
+    }
+  ]
+}

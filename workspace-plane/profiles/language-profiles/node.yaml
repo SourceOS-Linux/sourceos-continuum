@@ -1,0 +1,34 @@
+version: v0
+language: node
+lockfiles:
+- package-lock.json
+- yarn.lock
+- pnpm-lock.yaml
+local_authoritative:
+- src/**
+- app/**
+- tests/**
+- .devcontainer/**
+- package.json
+- tsconfig*.json
+- vite.config.*
+remote_authoritative:
+- node_modules/**
+- .npm/**
+- .pnpm-store/**
+- .yarn/cache/**
+derived:
+- dist/**
+- build/**
+- .next/**
+- coverage/**
+refresh_tasks:
+  on_lockfile_change:
+  - ./scripts/bootstrap-node-deps.sh
+  post_attach:
+  - npm run lint --if-present
+debug:
+  adapters:
+  - node-inspect
+  ports:
+  - 9229

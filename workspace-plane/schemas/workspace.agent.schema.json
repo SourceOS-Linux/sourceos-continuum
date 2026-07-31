@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/workspace.agent.schema.json",
+  "title": "workspace.agent.yaml v0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "mode",
+    "runtime"
+  ],
+  "properties": {
+    "version": {
+      "const": "v0"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "local",
+        "cluster",
+        "hybrid"
+      ]
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "local",
+        "remote"
+      ],
+      "properties": {
+        "local": {
+          "type": "string",
+          "const": "podman"
+        },
+        "remote": {
+          "type": "string",
+          "const": "kubernetes"
+        }
+      }
+    },
+    "sync": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "strategy": {
+          "type": "string",
+          "enum": [
+            "bidirectional",
+            "local-to-remote",
+            "artifact-only"
+          ]
+        },
+        "paths": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "include": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": []
+            },
+            "exclude": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": []
+            }
+          }
+        },
+        "conflict_policy": {
+          "type": "string",
+          "enum": [
+            "local-wins",
+            "remote-wins",
+            "manual"
+          ]
+        }
+      }
+    },
+    "debug": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "adapters": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "forward_ports": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "default": []
+        }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "writable_paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "allowed_commands": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "allow_git_mutation": {
+          "type": "boolean"
+        },
+        "secret_scopes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        }
+      }
+    },
+    "promotion": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allow_rebuild": {
+          "type": "boolean"
+        },
+        "allow_manifest_patch": {
+          "type": "boolean"
+        },
+        "require_approval": {
+          "type": "boolean"
+        }
+      }
+    },
+    "memory": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enable": {
+          "type": "boolean"
+        },
+        "roots": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "retain_days": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,219 @@
+apiVersion: workspaces.dev/v0alpha1
+kind: WorkspaceGraph
+metadata:
+  name: ledger
+  workspaceId: ws_01HVT0LEDGER001
+  repo:
+    url: git@github.com:acme/ledger.git
+    revision: ab12cd3
+    dirty: false
+  inputs:
+    devcontainer: .devcontainer/devcontainer.json
+    compose:
+    - compose.yaml
+    agent: workspace.agent.yaml
+compiler:
+  unsupportedMode: warn
+  profile: portable-restricted
+sources:
+- id: repo
+  kind: git
+  localPath: .
+  remoteStrategy: checkout
+  authority: local_authoritative
+  sync:
+    mode: mirror
+    include:
+    - app/**
+    - tests/**
+    - .devcontainer/**
+    - workspace.agent.yaml
+    - pyproject.toml
+    - uv.lock
+    exclude:
+    - .git/**
+    - .venv/**
+    - dist/**
+    - build/**
+    - __pycache__/**
+    - .pytest_cache/**
+    deletePropagation: true
+    chmodPolicy: exec-bit-only
+    symlinkPolicy: safe-relative-only
+storages:
+- id: workspace-src
+  kind: workspace
+  backend:
+    local: bind
+    cluster: emptyDir
+  persistence: session
+  authority: local_authoritative
+  class: source
+- id: py-cache
+  kind: cache
+  backend:
+    local: namedVolume
+    cluster: persistentVolumeClaim
+  persistence: workspace
+  authority: remote_authoritative
+  class: cache
+- id: db-data
+  kind: data
+  backend:
+    local: namedVolume
+    cluster: persistentVolumeClaim
+  persistence: durable
+  authority: remote_authoritative
+  class: data
+mounts:
+- id: dev-workspace
+  service: dev
+  storage: workspace-src
+  targetPath: /workspaces/ledger
+  access: rw
+  pathClass: source
+- id: py-cache-mount
+  service: dev
+  storage: py-cache
+  targetPath: /home/vscode/.cache
+  access: rw
+  pathClass: cache
+- id: db-data-mount
+  service: postgres
+  storage: db-data
+  targetPath: /var/lib/postgresql/data
+  access: rw
+  pathClass: data
+services:
+- id: dev
+  kind: dev
+  runtimeTargets:
+  - local
+  - cluster
+  - hybrid
+  image:
+    ref: ghcr.io/acme/ledger-dev:latest
+    digest: sha256:1111111111111111111111111111111111111111111111111111111111111111
+  workdir: /workspaces/ledger
+  user:
+    containerUser: vscode
+    remoteUser: vscode
+  lifecycle:
+    initialize:
+    - ./scripts/preflight.sh
+    onCreate:
+    - ./scripts/bootstrap.sh
+    updateContent:
+    - ./scripts/refresh-if-lockfiles-changed.sh
+    postCreate:
+    - ./scripts/post-create.sh
+    postStart:
+    - ./scripts/post-start.sh
+    postAttach:
+    - ./scripts/post-attach.sh
+  env:
+    PYTHONUNBUFFERED: '1'
+  dependsOn:
+  - api
+  - postgres
+- id: api
+  kind: app
+  source: compose:api
+  image:
+    buildContext: .
+    dockerfile: Dockerfile
+  workdir: /workspaces/ledger
+  env:
+    PORT: '8000'
+  ports:
+  - containerPort: 8000
+    protocol: tcp
+  mounts:
+  - dev-workspace
+- id: postgres
+  kind: dependency
+  source: compose:postgres
+  image:
+    ref: docker.io/library/postgres:16
+    digest: sha256:2222222222222222222222222222222222222222222222222222222222222222
+  ports:
+  - containerPort: 5432
+    protocol: tcp
+  mounts:
+  - db-data-mount
+- id: sync-agent
+  kind: agent
+  role: sync
+  runtimeTargets:
+  - cluster
+  - hybrid
+- id: debug-agent
+  kind: agent
+  role: debug
+  runtimeTargets:
+  - cluster
+  - hybrid
+endpoints:
+- id: api-http
+  service: api
+  port: 8000
+  protocol: http
+  exposure: forward
+  localPort: auto
+  auth: workspace
+- id: python-debug
+  service: dev
+  port: 5678
+  protocol: dap
+  exposure: private
+  localPort: auto
+  auth: workspace
+artifacts:
+- id: dev-image
+  kind: oci-image
+  producedBy: dev
+  digest: sha256:1111111111111111111111111111111111111111111111111111111111111111
+  promotable: false
+- id: api-image
+  kind: oci-image
+  producedBy: api
+  digest: sha256:3333333333333333333333333333333333333333333333333333333333333333
+  promotable: true
+roles:
+- principal: user:lord
+  role: developer
+  scopes:
+    sources:
+    - repo
+    services:
+    - dev
+    - api
+    endpoints:
+    - api-http
+    - python-debug
+  capabilities:
+  - edit_source
+  - exec
+  - debug_attach
+  - port_forward
+  - read_logs
+- principal: agent:policy
+  role: agent-policy
+  capabilities:
+  - validate_graph
+  - deny_unsafe_mounts
+  - deny_secret_export
+policies:
+  securityProfile: portable-restricted
+  network:
+    egress: project-allowlist
+  secrets:
+    importMode: explicit-approval-only
+    exportMode: deny
+  git:
+    allowAgentCommit: false
+    allowAgentBranchMutation: false
+  promotion:
+    allowRebuild: true
+    allowManifestPatch: false
+    requireApproval: true

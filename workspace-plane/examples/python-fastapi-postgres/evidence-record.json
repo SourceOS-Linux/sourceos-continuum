@@ -1,0 +1,20 @@
+{
+  "apiVersion": "workspaces.dev/v0alpha1",
+  "kind": "WorkspaceEvidence",
+  "workspaceId": "ws_01HVT0LEDGER001",
+  "graphDigest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "sessionId": "sess_01HVT0LEDGER001",
+  "records": [
+    {
+      "timestamp": "2026-03-09T12:10:00Z",
+      "stage": "classify",
+      "severity": "warning",
+      "code": "W_AGENT_EMULATION",
+      "message": "debugpy attach is provided by the debug agent and attach broker.",
+      "subject": "debug.adapters[0]",
+      "data": {
+        "adapter": "debugpy"
+      }
+    }
+  ]
+}

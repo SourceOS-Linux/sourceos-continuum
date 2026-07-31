@@ -1,0 +1,82 @@
+version: v0
+name: compose-support-profile-v0
+inputs:
+  authoring_model: compose.yaml
+  compiler_output: WorkspaceGraph
+field_classes:
+  A_supported_clean_translation:
+    description: Supported natively in local Podman mode and translated to Kubernetes
+      with low ambiguity.
+    fields:
+    - services
+    - services.*.image
+    - services.*.build.context
+    - services.*.build.dockerfile
+    - services.*.command
+    - services.*.entrypoint
+    - services.*.environment
+    - services.*.ports
+    - services.*.volumes (straightforward mounts only)
+    - services.*.depends_on (startup hint only)
+    - networks (basic named networks)
+    - volumes (basic named volumes)
+    - configs (simple file-backed only)
+    - services.*.restart (limited sane subset)
+  B_supported_local_caution_remote:
+    description: Supported locally but downgraded or partially translated remotely
+      with explicit parity-loss diagnostics.
+    fields:
+    - services.*.build.args
+    - services.*.build.target
+    - services.*.build.cache_from
+    - services.*.build.ssh
+    - services.*.depends_on.condition
+    - services.*.volumes (host-path-heavy patterns)
+    - services.*.extra_hosts
+    - services.*.dns
+    - services.*.devices
+    - services.*.network aliases
+    - services.*.working_dir overrides that assume host coupling
+  C_agent_emulated:
+    description: Not translated as Kubernetes manifest semantics; preserved by the
+      agent/runtime layer or devcontainer contract.
+    fields:
+    - hot-sync behavior
+    - IDE tasks
+    - developer shell/bootstrap helpers
+    - breakpoint/debug attach
+    - memory/indexing
+    - approval gates
+    - promotion rules
+    - preview routing metadata
+  D_rejected_v0:
+    description: Rejected in v0 because support would be unsafe, misleading, or too
+      runtime-specific.
+    fields:
+    - privileged-by-default assumptions
+    - unsafe host mutation
+    - runtime-specific daemon extensions
+    - host kernel/device manipulation without explicit adapter support
+    - fields that cannot be normalized honestly
+diagnostics:
+  errors:
+  - code: E_UNSUPPORTED_FIELD
+    meaning: Out of profile for selected mode.
+  - code: E_SECURITY_POLICY
+    meaning: Rejected by workspace policy or security profile.
+  warnings:
+  - code: W_PARITY_LOSS
+    meaning: Accepted but translated approximately for target runtime.
+  - code: W_AGENT_EMULATION
+    meaning: Behavior preserved by agent/runtime layer rather than native manifest
+      semantics.
+  info:
+  - code: I_LOCAL_ONLY
+    meaning: Valid only in local mode and ignored for cluster materialization.
+translation_pipeline:
+- ingest
+- normalize
+- classify
+- realize
+- attach
+- evidence

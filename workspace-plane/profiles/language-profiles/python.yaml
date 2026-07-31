@@ -1,0 +1,35 @@
+version: v0
+language: python
+lockfiles:
+- requirements.txt
+- poetry.lock
+- Pipfile.lock
+- uv.lock
+local_authoritative:
+- app/**
+- src/**
+- tests/**
+- .devcontainer/**
+- pyproject.toml
+- requirements*.txt
+remote_authoritative:
+- .venv/**
+- .cache/pip/**
+- .cache/uv/**
+- __pycache__/**
+derived:
+- build/**
+- dist/**
+- .pytest_cache/**
+- .mypy_cache/**
+- .ruff_cache/**
+refresh_tasks:
+  on_lockfile_change:
+  - ./scripts/bootstrap-python-deps.sh
+  post_attach:
+  - pytest -q || true
+debug:
+  adapters:
+  - debugpy
+  ports:
+  - 5678

@@ -1,0 +1,33 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command:
+    - npm
+    - run
+    - dev
+    environment:
+      PORT: '8080'
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/payments
+    ports:
+    - 8080:8080
+    volumes:
+    - type: bind
+      source: .
+      target: /workspaces/payments
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: payments
+    ports:
+    - 5432:5432
+    volumes:
+    - pg-data:/var/lib/postgresql/data
+volumes:
+  pg-data: {}
+networks:
+  default:
+    name: payments-net

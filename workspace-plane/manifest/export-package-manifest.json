@@ -1,0 +1,195 @@
+{
+  "name": "open-workspace-plane-v0-export",
+  "version": "0.1.0",
+  "created_at": "2026-03-09T00:00:00Z",
+  "validated_at": "2026-03-09T00:00:00Z",
+  "artifacts": [
+    {
+      "path": "README.md",
+      "sha256": "bcbf8ed245e4217e1963a3ae621434363e1d483340a17540895b1c20521720da",
+      "size": 1654
+    },
+    {
+      "path": "docs/adapter-interfaces.md",
+      "sha256": "6107f24da0d40ffcde5667392924e8a426e5ccc7af181d2bfc739144025c64f7",
+      "size": 1679
+    },
+    {
+      "path": "docs/architecture-overview.md",
+      "sha256": "d5cbe926fa1be03c2035b610aac911c1b1d7957c9e735f2778bae4d93c6980ac",
+      "size": 2613
+    },
+    {
+      "path": "docs/integration-alignment-guide.md",
+      "sha256": "738b94b99a84719f3b38883f85735eaa6e043cfad754a8cee9e2ce9129529a85",
+      "size": 1553
+    },
+    {
+      "path": "docs/references.md",
+      "sha256": "150100d3071638015ae8cf83a87e25c2508d46201e8e5955bff8957692b4f2f4",
+      "size": 604
+    },
+    {
+      "path": "docs/translation-contract.md",
+      "sha256": "0d02d735fa308d0064a46111a74d1684011f18b19b7c8e0e7a3da01e87461f4c",
+      "size": 2395
+    },
+    {
+      "path": "docs/warning-taxonomy.md",
+      "sha256": "34e9e514b78f918c43dea1475742751f6eaf44becb2e25d641602d668dca915e",
+      "size": 895
+    },
+    {
+      "path": "docs/workspace-graph.md",
+      "sha256": "1837e79cdace862dcd71271dd1c13c2b56dd461b5da907465a709b5f8b9ce0f6",
+      "size": 1366
+    },
+    {
+      "path": "docs/workspace-sync.md",
+      "sha256": "d516894f8ec6a14bd38b03654ba1b72482475716e29a2f8a9576252c555766dc",
+      "size": 929
+    },
+    {
+      "path": "examples/node-postgres/.devcontainer/devcontainer.json",
+      "sha256": "9dc0b71b4871c44be3e8c1abc10317ef67db12872eca50ad8b9822437ab0a044",
+      "size": 761
+    },
+    {
+      "path": "examples/node-postgres/compose.yaml",
+      "sha256": "56ad54a6371ec94e4e3b7a9e5bd8fa6e2b4189ef1f4c8118afaa6c4e031652a8",
+      "size": 623
+    },
+    {
+      "path": "examples/node-postgres/evidence-record.json",
+      "sha256": "b65b0fb2d63e713d535b9bacfabdeccc759a0a265d931d3ad18e41467e07b5ff",
+      "size": 1396
+    },
+    {
+      "path": "examples/node-postgres/workspace-graph.yaml",
+      "sha256": "ef2f75e1f75dd857f37943e2d8f96bec0609000f5d9478a674d49a468b596a1b",
+      "size": 5195
+    },
+    {
+      "path": "examples/node-postgres/workspace-sync.yaml",
+      "sha256": "91034df83d21f79f0f584c130e6f298dca0ff1c0bd1f4f9a3126e356a67092c9",
+      "size": 1322
+    },
+    {
+      "path": "examples/node-postgres/workspace.agent.yaml",
+      "sha256": "cbae91f2c2876f92cb713375c4f7a943e0b000c95048494ce5e10f9cbf1e1874",
+      "size": 848
+    },
+    {
+      "path": "examples/python-fastapi-postgres/.devcontainer/devcontainer.json",
+      "sha256": "dec5ca52e78bb169566092937007cf692cb88a0d57e69b32519d41d90730ee83",
+      "size": 738
+    },
+    {
+      "path": "examples/python-fastapi-postgres/compose.yaml",
+      "sha256": "b0a3b0e05f6b7a7c4d2a8a23c4059944a0a6e4c3d6560594a4b647f4fa988a6e",
+      "size": 688
+    },
+    {
+      "path": "examples/python-fastapi-postgres/evidence-record.json",
+      "sha256": "b3375819b04ed1f4f4433351093d1ef6df48cf52523057eb36eca49d1147ce87",
+      "size": 589
+    },
+    {
+      "path": "examples/python-fastapi-postgres/workspace-graph.yaml",
+      "sha256": "680a2fc36b30cd28725e3eba647b63f2f7d187ca09dade135693c672762ba09a",
+      "size": 4379
+    },
+    {
+      "path": "examples/python-fastapi-postgres/workspace-sync.yaml",
+      "sha256": "0396bba1f4dbcb5de62bcee0ccd696507b3392593abcffa7067d36e8a2b0c911",
+      "size": 1247
+    },
+    {
+      "path": "examples/python-fastapi-postgres/workspace.agent.yaml",
+      "sha256": "ba107025ee4a5781404a6cbb7c00eba8044039b93f29beac91705e74b0ce9d93",
+      "size": 834
+    },
+    {
+      "path": "manifest/validation-report.json",
+      "sha256": "154a885eb1f170899f4ad3b2b574a25a1041eb1ca2cf80b93f686a44e8df7c5e",
+      "size": 1273
+    },
+    {
+      "path": "matrices/integration-alignment-matrix.csv",
+      "sha256": "43073efcc69172f62d7c6809c287b8f560c051c3f8d5cb40eabf5c67d1c2d54d",
+      "size": 1068
+    },
+    {
+      "path": "profiles/compose-support-profile.v0.yaml",
+      "sha256": "f07a8356531a8aa737f446324ecc0a73c142cdbc906b9d84291634873eb98546",
+      "size": 2678
+    },
+    {
+      "path": "profiles/language-profiles/go.yaml",
+      "sha256": "64a473b45b6870bc84225b2a9c236c1ad78d92713b795fa8fc03b8e43389a891",
+      "size": 409
+    },
+    {
+      "path": "profiles/language-profiles/java.yaml",
+      "sha256": "530a26ea5b11036592d06e988ac81437695415555c7085a350ddfdbd6603b2ef",
+      "size": 474
+    },
+    {
+      "path": "profiles/language-profiles/node.yaml",
+      "sha256": "ca0935b023c177a67b1539295f0761d24712914aa71c5fa3fcb4e476504930b8",
+      "size": 516
+    },
+    {
+      "path": "profiles/language-profiles/python.yaml",
+      "sha256": "aa36bc970d3d1a95a53ac9010d05e3f7a7663b8fa986e347ca51e85f242ccde5",
+      "size": 530
+    },
+    {
+      "path": "profiles/security-profile-portable-restricted.yaml",
+      "sha256": "dbe3393a41ad4b04514fc4a538404ead2216cb973cd940417fe7118e36eaeaf1",
+      "size": 708
+    },
+    {
+      "path": "schemas/evidence-record.schema.json",
+      "sha256": "99684555c5542b10d0015791615ef216d2a31a74ad5b33b0db0e6d0eb8c6da95",
+      "size": 1889
+    },
+    {
+      "path": "schemas/workspace-graph.schema.json",
+      "sha256": "efeeaecb95d6262e781b5b20fb915d33816c99ff8a801fc5278fea12eec0fc8c",
+      "size": 15976
+    },
+    {
+      "path": "schemas/workspace-sync.schema.json",
+      "sha256": "048fff00a7351845fcf735104d75ec678e81d95ef90a1eee054eba58365cc9a6",
+      "size": 5373
+    },
+    {
+      "path": "schemas/workspace.agent.schema.json",
+      "sha256": "f1073e552c37b64fe06e77df6997b15fc6285d4cf7ba4fc0c10a1b4772f4acff",
+      "size": 3617
+    },
+    {
+      "path": "scripts/validate_examples.py",
+      "sha256": "3ca9634d190ef06d7e1b773e762a0afe7a607de3a68ae915276e2ee9041809cd",
+      "size": 2103
+    }
+  ],
+  "entrypoints": {
+    "readme": "README.md",
+    "schemas": [
+      "schemas/workspace.agent.schema.json",
+      "schemas/workspace-graph.schema.json",
+      "schemas/workspace-sync.schema.json",
+      "schemas/evidence-record.schema.json"
+    ],
+    "profiles": [
+      "profiles/compose-support-profile.v0.yaml",
+      "profiles/security-profile-portable-restricted.yaml"
+    ],
+    "examples": [
+      "examples/node-postgres",
+      "examples/python-fastapi-postgres"
+    ]
+  }
+}

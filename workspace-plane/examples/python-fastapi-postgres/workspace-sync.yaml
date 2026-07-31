@@ -1,0 +1,56 @@
+apiVersion: workspaces.dev/v0alpha1
+kind: WorkspaceSync
+workspaceId: ws_01HVT0LEDGER001
+graphDigest: sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+roots:
+- source: repo
+  authority: local_authoritative
+  mode: mirror
+  include:
+  - app/**
+  - tests/**
+  - .devcontainer/**
+  - workspace.agent.yaml
+  - pyproject.toml
+  - uv.lock
+  exclude:
+  - .git/**
+  - .venv/**
+  - dist/**
+  - build/**
+  - __pycache__/**
+  - .pytest_cache/**
+  bootstrap: content-addressed-snapshot
+  delta: journaled
+  deletePropagation: true
+  chmodPolicy: exec-bit-only
+  symlinkPolicy: safe-relative-only
+  conflictPolicy: authoritative-wins-with-shadow
+  checkpoints:
+    everyOps: 500
+    everySeconds: 20
+- source: runtime-cache
+  authority: remote_authoritative
+  mode: none
+protocol:
+  phases:
+  - negotiate
+  - seed
+  - watch
+  - journal
+  - apply
+  - ack
+  - checkpoint
+  changeOp:
+    root: repo
+    seq: 210
+    side: local
+    kind: upsert
+    path: app/main.py
+    oldPath: null
+    baseDigest: sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+    newDigest: sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+    metadata:
+      executable: false
+      symlinkTarget: null
+      size: 1110

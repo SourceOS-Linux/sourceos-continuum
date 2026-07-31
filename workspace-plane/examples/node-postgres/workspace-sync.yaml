@@ -1,0 +1,60 @@
+apiVersion: workspaces.dev/v0alpha1
+kind: WorkspaceSync
+workspaceId: ws_01HVT0PAYMENTS001
+graphDigest: sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+roots:
+- source: repo
+  authority: local_authoritative
+  mode: mirror
+  include:
+  - src/**
+  - app/**
+  - tests/**
+  - .devcontainer/**
+  - workspace.agent.yaml
+  - package.json
+  - pnpm-lock.yaml
+  exclude:
+  - .git/**
+  - node_modules/**
+  - .venv/**
+  - dist/**
+  - build/**
+  - target/**
+  bootstrap: content-addressed-snapshot
+  delta: journaled
+  deletePropagation: true
+  chmodPolicy: exec-bit-only
+  symlinkPolicy: safe-relative-only
+  conflictPolicy: authoritative-wins-with-shadow
+  checkpoints:
+    everyOps: 500
+    everySeconds: 20
+- source: generated-stubs
+  authority: derived
+  mode: none
+- source: runtime-cache
+  authority: remote_authoritative
+  mode: none
+protocol:
+  phases:
+  - negotiate
+  - seed
+  - watch
+  - journal
+  - apply
+  - ack
+  - checkpoint
+  changeOp:
+    root: repo
+    seq: 1842
+    side: local
+    kind: upsert
+    path: src/server.ts
+    oldPath: null
+    baseDigest: sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+    newDigest: sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+    metadata:
+      executable: false
+      symlinkTarget: null
+      size: 4210

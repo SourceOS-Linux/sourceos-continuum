@@ -1,0 +1,30 @@
+version: v0
+language: go
+lockfiles:
+- go.mod
+- go.sum
+local_authoritative:
+- cmd/**
+- internal/**
+- pkg/**
+- tests/**
+- .devcontainer/**
+- go.mod
+- go.sum
+remote_authoritative:
+- $GOMODCACHE/**
+- $GOCACHE/**
+derived:
+- bin/**
+- dist/**
+- coverage.out
+refresh_tasks:
+  on_lockfile_change:
+  - ./scripts/bootstrap-go-deps.sh
+  post_attach:
+  - go test ./... || true
+debug:
+  adapters:
+  - dlv
+  ports:
+  - 2345
