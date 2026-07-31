@@ -1,0 +1,45 @@
+{
+  "apiVersion": "workspaces.dev/v0alpha1",
+  "kind": "WorkspaceEvidence",
+  "workspaceId": "ws_01HVT0PAYMENTS001",
+  "graphDigest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "sessionId": "sess_01HVT0PAYMENTS001",
+  "records": [
+    {
+      "timestamp": "2026-03-09T12:00:00Z",
+      "stage": "normalize",
+      "severity": "info",
+      "code": "I_LOCAL_ONLY",
+      "message": "Local bind mount semantics were kept for local mode and excluded from cluster materialization.",
+      "subject": "services.api.volumes[0]",
+      "data": {
+        "mode": "local"
+      }
+    },
+    {
+      "timestamp": "2026-03-09T12:00:02Z",
+      "stage": "classify",
+      "severity": "warning",
+      "code": "W_PARITY_LOSS",
+      "message": "depends_on was reduced to a startup hint for cluster mode.",
+      "subject": "services.api.depends_on",
+      "data": {
+        "translatedAs": "DependencyEdge(startupHintOnly=true)"
+      }
+    },
+    {
+      "timestamp": "2026-03-09T12:00:04Z",
+      "stage": "realize",
+      "severity": "warning",
+      "code": "W_AGENT_EMULATION",
+      "message": "Hot sync and debug attach were realized through sync and debug agents rather than native Kubernetes manifest fields.",
+      "subject": "workspace.agent.yaml",
+      "data": {
+        "agents": [
+          "sync-agent",
+          "debug-agent"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+version: v0
+name: portable-restricted
+local:
+  runtime: podman
+  rootless_required: true
+  principles:
+  - regular-user execution by default
+  - avoid privileged containers
+  - prefer bind mounts for local source and named volumes for cache/data
+cluster:
+  runtime: kubernetes
+  pod_security_alignment: Restricted
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+  seccompProfile: RuntimeDefault
+  capabilities:
+    drop:
+    - ALL
+    add: []
+  allowedVolumeKinds:
+  - configMap
+  - csi
+  - downwardAPI
+  - emptyDir
+  - ephemeral
+  - persistentVolumeClaim
+  - projected
+  - secret
+  debug_policy:
+    ephemeral_containers: troubleshooting-only
+    long_lived_debug: use declared dev or debug services

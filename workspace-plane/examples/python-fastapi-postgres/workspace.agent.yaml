@@ -1,0 +1,54 @@
+version: v0
+mode: cluster
+runtime:
+  local: podman
+  remote: kubernetes
+sync:
+  strategy: local-to-remote
+  paths:
+    include:
+    - app/**
+    - tests/**
+    - .devcontainer/**
+    - workspace.agent.yaml
+    - pyproject.toml
+    - uv.lock
+    exclude:
+    - .git/**
+    - .venv/**
+    - dist/**
+    - build/**
+    - __pycache__/**
+  conflict_policy: local-wins
+debug:
+  adapters:
+  - debugpy
+  forward_ports:
+  - 8000
+  - 5678
+  - 5432
+policy:
+  writable_paths:
+  - /workspaces/ledger
+  - /tmp
+  - /home/vscode/.cache
+  allowed_commands:
+  - python
+  - uvicorn
+  - bash
+  - pytest
+  - psql
+  allow_git_mutation: false
+  secret_scopes:
+  - workspace
+  - registry:ghcr.io
+promotion:
+  allow_rebuild: true
+  allow_manifest_patch: false
+  require_approval: true
+memory:
+  enable: true
+  roots:
+  - .
+  - .devcontainer
+  retain_days: 14

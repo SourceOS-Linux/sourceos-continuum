@@ -1,0 +1,55 @@
+version: v0
+mode: hybrid
+runtime:
+  local: podman
+  remote: kubernetes
+sync:
+  strategy: local-to-remote
+  paths:
+    include:
+    - src/**
+    - app/**
+    - tests/**
+    - .devcontainer/**
+    - workspace.agent.yaml
+    - package.json
+    - pnpm-lock.yaml
+    exclude:
+    - .git/**
+    - node_modules/**
+    - dist/**
+    - build/**
+    - .cache/**
+  conflict_policy: local-wins
+debug:
+  adapters:
+  - node-inspect
+  forward_ports:
+  - 8080
+  - 9229
+  - 5432
+policy:
+  writable_paths:
+  - /workspaces/payments
+  - /tmp
+  - /home/vscode/.npm
+  allowed_commands:
+  - npm
+  - node
+  - bash
+  - sh
+  - psql
+  allow_git_mutation: false
+  secret_scopes:
+  - workspace
+  - registry:ghcr.io
+promotion:
+  allow_rebuild: true
+  allow_manifest_patch: false
+  require_approval: true
+memory:
+  enable: true
+  roots:
+  - .
+  - .devcontainer
+  retain_days: 14

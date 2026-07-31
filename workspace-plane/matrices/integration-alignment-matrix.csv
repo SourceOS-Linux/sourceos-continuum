@@ -1,0 +1,11 @@
+domain,artifact,owner,consumers,purpose,status
+authoring,devcontainer.json,app-team,"compiler, IDE",developer-facing environment and tooling expectations,frozen-v0
+authoring,compose.yaml,app-team,compiler,service topology authoring input,frozen-v0
+authoring,workspace.agent.yaml,platform+app-team,"compiler, sync, policy","workspace policy, sync, debug, promotion intent",frozen-v0
+compiler,WorkspaceGraph,platform-team,all adapters,canonical normalized internal graph,frozen-v0
+compiler,WorkspaceSync,platform-team,sync-adapter,compiled sync contract,frozen-v0
+runtime,Podman local adapter,platform-team,"CLI, IDE",local rootless execution,planned
+runtime,Kubernetes adapter,platform-team,"CLI, IDE",attach/materialize execution,planned
+security,portable-restricted profile,security-team,"compiler, kubernetes-adapter",cluster-safe default posture,frozen-v0
+ide,DAP/LSP attach broker,ide-team,desktop+browser-clients,debug and language attach surface,planned
+evidence,WorkspaceEvidence,platform-team,"CI, ops, IDE",replayable compile/runtime log,frozen-v0

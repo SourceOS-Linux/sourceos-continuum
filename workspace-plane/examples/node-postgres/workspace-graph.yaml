@@ -1,0 +1,262 @@
+apiVersion: workspaces.dev/v0alpha1
+kind: WorkspaceGraph
+metadata:
+  name: payments
+  workspaceId: ws_01HVT0PAYMENTS001
+  repo:
+    url: git@github.com:acme/payments.git
+    revision: 9f2ac73
+    dirty: false
+  inputs:
+    devcontainer: .devcontainer/devcontainer.json
+    compose:
+    - compose.yaml
+    agent: workspace.agent.yaml
+compiler:
+  unsupportedMode: warn
+  profile: portable-restricted
+sources:
+- id: repo
+  kind: git
+  localPath: .
+  remoteStrategy: checkout
+  authority: local_authoritative
+  sync:
+    mode: mirror
+    include:
+    - src/**
+    - app/**
+    - pkg/**
+    - tests/**
+    - .devcontainer/**
+    - workspace.agent.yaml
+    - compose*.yaml
+    - package.json
+    - pnpm-lock.yaml
+    exclude:
+    - .git/**
+    - node_modules/**
+    - .venv/**
+    - target/**
+    - dist/**
+    - build/**
+    - .cache/**
+    deletePropagation: true
+    chmodPolicy: exec-bit-only
+    symlinkPolicy: safe-relative-only
+storages:
+- id: workspace-src
+  kind: workspace
+  backend:
+    local: bind
+    cluster: emptyDir
+  persistence: session
+  authority: local_authoritative
+  class: source
+- id: dep-cache
+  kind: cache
+  backend:
+    local: namedVolume
+    cluster: persistentVolumeClaim
+  persistence: workspace
+  authority: remote_authoritative
+  class: cache
+- id: service-data
+  kind: data
+  backend:
+    local: namedVolume
+    cluster: persistentVolumeClaim
+  persistence: durable
+  authority: remote_authoritative
+  class: data
+- id: app-config
+  kind: config
+  backend:
+    cluster: configMap
+    local: none
+  persistence: immutable
+  authority: immutable_injected
+  class: config
+- id: app-secret
+  kind: secret
+  backend:
+    cluster: secret
+    local: none
+  persistence: immutable
+  authority: immutable_injected
+  class: secret
+mounts:
+- id: dev-workspace
+  service: dev
+  storage: workspace-src
+  targetPath: /workspaces/payments
+  access: rw
+  pathClass: source
+- id: npm-cache
+  service: dev
+  storage: dep-cache
+  targetPath: /home/vscode/.npm
+  access: rw
+  pathClass: cache
+- id: pg-data
+  service: postgres
+  storage: service-data
+  targetPath: /var/lib/postgresql/data
+  access: rw
+  pathClass: data
+- id: cfg-mount
+  service: api
+  storage: app-config
+  targetPath: /etc/app/config
+  access: ro
+  pathClass: config
+services:
+- id: dev
+  kind: dev
+  runtimeTargets:
+  - local
+  - cluster
+  - hybrid
+  image:
+    ref: ghcr.io/acme/payments-dev:latest
+    digest: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  workdir: /workspaces/payments
+  user:
+    containerUser: vscode
+    remoteUser: vscode
+  lifecycle:
+    initialize:
+    - ./scripts/preflight.sh
+    onCreate:
+    - ./scripts/bootstrap.sh
+    updateContent:
+    - ./scripts/refresh-if-lockfiles-changed.sh
+    postCreate:
+    - ./scripts/post-create.sh
+    postStart:
+    - ./scripts/post-start.sh
+    postAttach:
+    - ./scripts/post-attach.sh
+  env:
+    NODE_ENV: development
+  dependsOn:
+  - api
+  - postgres
+- id: api
+  kind: app
+  source: compose:api
+  image:
+    buildContext: .
+    dockerfile: Dockerfile
+  workdir: /workspaces/payments
+  env:
+    PORT: '8080'
+  ports:
+  - containerPort: 8080
+    protocol: tcp
+  mounts:
+  - dev-workspace
+- id: postgres
+  kind: dependency
+  source: compose:postgres
+  image:
+    ref: docker.io/library/postgres:16
+    digest: sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+  ports:
+  - containerPort: 5432
+    protocol: tcp
+  mounts:
+  - pg-data
+- id: sync-agent
+  kind: agent
+  role: sync
+  runtimeTargets:
+  - cluster
+  - hybrid
+- id: debug-agent
+  kind: agent
+  role: debug
+  runtimeTargets:
+  - cluster
+  - hybrid
+endpoints:
+- id: api-http
+  service: api
+  port: 8080
+  protocol: http
+  exposure: forward
+  localPort: auto
+  auth: workspace
+- id: node-debug
+  service: dev
+  port: 9229
+  protocol: dap
+  exposure: private
+  localPort: auto
+  auth: workspace
+artifacts:
+- id: dev-image
+  kind: oci-image
+  producedBy: dev
+  digest: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  promotable: false
+- id: api-image
+  kind: oci-image
+  producedBy: api
+  digest: sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+  promotable: true
+- id: build-report
+  kind: report
+  producedBy: api
+  path: .cairn/reports/build.json
+  promotable: false
+roles:
+- principal: user:lord
+  role: developer
+  scopes:
+    sources:
+    - repo
+    services:
+    - dev
+    - api
+    endpoints:
+    - api-http
+    - node-debug
+  capabilities:
+  - edit_source
+  - exec
+  - debug_attach
+  - port_forward
+  - read_logs
+- principal: agent:steward
+  role: agent-steward
+  capabilities:
+  - start_stop
+  - health_check
+  - checkpoint
+- principal: agent:sync
+  role: agent-sync
+  capabilities:
+  - mirror_source
+  - emit_conflicts
+  - checkpoint
+- principal: agent:policy
+  role: agent-policy
+  capabilities:
+  - validate_graph
+  - deny_unsafe_mounts
+  - deny_secret_export
+policies:
+  securityProfile: portable-restricted
+  network:
+    egress: project-allowlist
+  secrets:
+    importMode: explicit-approval-only
+    exportMode: deny
+  git:
+    allowAgentCommit: false
+    allowAgentBranchMutation: false
+  promotion:
+    allowRebuild: true
+    allowManifestPatch: false
+    requireApproval: true

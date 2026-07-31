@@ -1,0 +1,26 @@
+{
+  "name": "Payments Dev",
+  "image": "ghcr.io/acme/payments-dev:latest",
+  "remoteUser": "vscode",
+  "workspaceFolder": "/workspaces/payments",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/payments,type=bind",
+  "forwardPorts": [
+    8080,
+    9229,
+    5432
+  ],
+  "initializeCommand": "./scripts/preflight.sh",
+  "onCreateCommand": "./scripts/bootstrap.sh",
+  "updateContentCommand": "./scripts/refresh-if-lockfiles-changed.sh",
+  "postCreateCommand": "./scripts/post-create.sh",
+  "postStartCommand": "./scripts/post-start.sh",
+  "postAttachCommand": "./scripts/post-attach.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.js-debug-nightly",
+        "dbaeumer.vscode-eslint"
+      ]
+    }
+  }
+}

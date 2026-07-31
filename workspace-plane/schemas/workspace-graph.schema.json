@@ -1,0 +1,732 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/workspace-graph.schema.json",
+  "title": "WorkspaceGraph v0alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "compiler",
+    "sources",
+    "storages",
+    "mounts",
+    "services",
+    "endpoints",
+    "artifacts",
+    "roles",
+    "policies"
+  ],
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "stringArray": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "stringMap": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "authorityClass": {
+      "type": "string",
+      "enum": [
+        "local_authoritative",
+        "remote_authoritative",
+        "derived",
+        "immutable_injected",
+        "agent_emulated"
+      ]
+    },
+    "pathClass": {
+      "type": "string",
+      "enum": [
+        "source",
+        "cache",
+        "data",
+        "config",
+        "secret",
+        "derived",
+        "scratch"
+      ]
+    },
+    "portProtocol": {
+      "type": "string",
+      "enum": [
+        "tcp",
+        "udp"
+      ]
+    },
+    "endpointProtocol": {
+      "type": "string",
+      "enum": [
+        "http",
+        "https",
+        "tcp",
+        "udp",
+        "dap",
+        "lsp",
+        "ws"
+      ]
+    },
+    "runtimeTarget": {
+      "type": "string",
+      "enum": [
+        "local",
+        "cluster",
+        "hybrid"
+      ]
+    },
+    "imageRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ref": {
+          "type": "string"
+        },
+        "digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "buildContext": {
+          "type": "string"
+        },
+        "dockerfile": {
+          "type": "string"
+        }
+      }
+    },
+    "lifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "initialize": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "onCreate": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "updateContent": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "postCreate": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "postStart": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "postAttach": {
+          "$ref": "#/$defs/stringArray"
+        }
+      }
+    },
+    "port": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "containerPort",
+        "protocol"
+      ],
+      "properties": {
+        "containerPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "protocol": {
+          "$ref": "#/$defs/portProtocol"
+        }
+      }
+    },
+    "scopeObject": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "sources": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "services": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "endpoints": {
+          "$ref": "#/$defs/stringArray"
+        }
+      }
+    }
+  },
+  "properties": {
+    "apiVersion": {
+      "const": "workspaces.dev/v0alpha1"
+    },
+    "kind": {
+      "const": "WorkspaceGraph"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "workspaceId",
+        "repo",
+        "inputs"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "workspaceId": {
+          "type": "string"
+        },
+        "repo": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "url",
+            "revision",
+            "dirty"
+          ],
+          "properties": {
+            "url": {
+              "type": "string"
+            },
+            "revision": {
+              "type": "string"
+            },
+            "dirty": {
+              "type": "boolean"
+            }
+          }
+        },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "devcontainer",
+            "agent"
+          ],
+          "properties": {
+            "devcontainer": {
+              "type": "string"
+            },
+            "compose": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": []
+            },
+            "agent": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "compiler": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "unsupportedMode",
+        "profile"
+      ],
+      "properties": {
+        "unsupportedMode": {
+          "type": "string",
+          "enum": [
+            "warn",
+            "strict",
+            "loose"
+          ]
+        },
+        "profile": {
+          "type": "string",
+          "enum": [
+            "portable-restricted"
+          ]
+        }
+      }
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "kind",
+          "localPath",
+          "remoteStrategy",
+          "authority"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "git",
+              "local",
+              "generated",
+              "artifact"
+            ]
+          },
+          "localPath": {
+            "type": "string"
+          },
+          "remoteStrategy": {
+            "type": "string",
+            "enum": [
+              "checkout",
+              "mirror-dotgit",
+              "exclude-dotgit"
+            ]
+          },
+          "authority": {
+            "$ref": "#/$defs/authorityClass"
+          },
+          "sync": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "mirror",
+                  "pull",
+                  "shared_manual",
+                  "none"
+                ]
+              },
+              "include": {
+                "$ref": "#/$defs/stringArray"
+              },
+              "exclude": {
+                "$ref": "#/$defs/stringArray"
+              },
+              "deletePropagation": {
+                "type": "boolean"
+              },
+              "chmodPolicy": {
+                "type": "string",
+                "enum": [
+                  "exec-bit-only",
+                  "preserve",
+                  "ignore"
+                ]
+              },
+              "symlinkPolicy": {
+                "type": "string",
+                "enum": [
+                  "safe-relative-only",
+                  "deny",
+                  "allow"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "storages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "kind",
+          "backend",
+          "persistence",
+          "authority",
+          "class"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "workspace",
+              "cache",
+              "data",
+              "config",
+              "secret",
+              "scratch"
+            ]
+          },
+          "backend": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "local": {
+                "type": "string",
+                "enum": [
+                  "bind",
+                  "namedVolume",
+                  "tmpfs",
+                  "none"
+                ]
+              },
+              "cluster": {
+                "type": "string",
+                "enum": [
+                  "emptyDir",
+                  "persistentVolumeClaim",
+                  "configMap",
+                  "secret",
+                  "projected",
+                  "ephemeral",
+                  "csi",
+                  "downwardAPI",
+                  "none"
+                ]
+              }
+            }
+          },
+          "persistence": {
+            "type": "string",
+            "enum": [
+              "session",
+              "workspace",
+              "durable",
+              "immutable"
+            ]
+          },
+          "authority": {
+            "$ref": "#/$defs/authorityClass"
+          },
+          "class": {
+            "$ref": "#/$defs/pathClass"
+          }
+        }
+      }
+    },
+    "mounts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "service",
+          "storage",
+          "targetPath",
+          "access",
+          "pathClass"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "service": {
+            "type": "string"
+          },
+          "storage": {
+            "type": "string"
+          },
+          "targetPath": {
+            "type": "string"
+          },
+          "access": {
+            "type": "string",
+            "enum": [
+              "ro",
+              "rw"
+            ]
+          },
+          "pathClass": {
+            "$ref": "#/$defs/pathClass"
+          }
+        }
+      }
+    },
+    "services": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "kind"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "dev",
+              "app",
+              "dependency",
+              "agent"
+            ]
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "sync",
+              "debug",
+              "steward",
+              "policy",
+              "memory"
+            ]
+          },
+          "runtimeTargets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/runtimeTarget"
+            },
+            "uniqueItems": true
+          },
+          "image": {
+            "$ref": "#/$defs/imageRef"
+          },
+          "source": {
+            "type": "string"
+          },
+          "workdir": {
+            "type": "string"
+          },
+          "user": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "containerUser": {
+                "type": "string"
+              },
+              "remoteUser": {
+                "type": "string"
+              }
+            }
+          },
+          "lifecycle": {
+            "$ref": "#/$defs/lifecycle"
+          },
+          "env": {
+            "$ref": "#/$defs/stringMap"
+          },
+          "dependsOn": {
+            "$ref": "#/$defs/stringArray"
+          },
+          "ports": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/port"
+            }
+          },
+          "mounts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "endpoints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "service",
+          "port",
+          "protocol",
+          "exposure"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "service": {
+            "type": "string"
+          },
+          "port": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "protocol": {
+            "$ref": "#/$defs/endpointProtocol"
+          },
+          "exposure": {
+            "type": "string",
+            "enum": [
+              "internal",
+              "forward",
+              "preview",
+              "gateway",
+              "private"
+            ]
+          },
+          "localPort": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 65535
+              },
+              {
+                "type": "string",
+                "const": "auto"
+              }
+            ]
+          },
+          "auth": {
+            "type": "string",
+            "enum": [
+              "none",
+              "workspace",
+              "sso",
+              "private"
+            ]
+          }
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "kind",
+          "producedBy",
+          "promotable"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "oci-image",
+              "report",
+              "manifest",
+              "index",
+              "trace",
+              "bundle"
+            ]
+          },
+          "producedBy": {
+            "type": "string"
+          },
+          "digest": {
+            "$ref": "#/$defs/digest"
+          },
+          "path": {
+            "type": "string"
+          },
+          "promotable": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "roles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "principal",
+          "role",
+          "capabilities"
+        ],
+        "properties": {
+          "principal": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "scopes": {
+            "$ref": "#/$defs/scopeObject"
+          },
+          "capabilities": {
+            "$ref": "#/$defs/stringArray"
+          }
+        }
+      }
+    },
+    "policies": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "securityProfile",
+        "network",
+        "secrets",
+        "git",
+        "promotion"
+      ],
+      "properties": {
+        "securityProfile": {
+          "type": "string",
+          "enum": [
+            "portable-restricted"
+          ]
+        },
+        "network": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "egress": {
+              "type": "string"
+            }
+          }
+        },
+        "secrets": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "importMode": {
+              "type": "string"
+            },
+            "exportMode": {
+              "type": "string"
+            }
+          }
+        },
+        "git": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "allowAgentCommit": {
+              "type": "boolean"
+            },
+            "allowAgentBranchMutation": {
+              "type": "boolean"
+            }
+          }
+        },
+        "promotion": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "allowRebuild": {
+              "type": "boolean"
+            },
+            "allowManifestPatch": {
+              "type": "boolean"
+            },
+            "requireApproval": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    }
+  }
+}
