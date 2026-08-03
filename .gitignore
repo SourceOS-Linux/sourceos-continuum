@@ -18,6 +18,9 @@ artifacts/gate-decisions/*.json
 # Live mesh telemetry heartbeats (emitted by nodes at runtime, not committed; dir kept via .gitkeep)
 artifacts/mesh-heartbeats/*.json
 
+# MCP ops-surface receipts (sealed per tool call at runtime; dir kept via .gitkeep)
+artifacts/mcp-receipts/*.json
+
 # Porter control-plane build outputs (compiled locally, not committed)
 artifacts/porter-shim/shim
 artifacts/cloudshell-hardened-pack/culler/culler
