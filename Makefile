@@ -1,6 +1,6 @@
 # SourceOS Continuum — lifecycle entry points.
 # Control-plane targets delegate to Makefile.porter (the rehomed Porter control plane).
-.PHONY: validate onboard dev-up dev-down shim-test test rollout
+.PHONY: validate onboard dev-up dev-down shim-test test rollout promotion-gate
 
 validate: ## repo hygiene + CapD validity
 	python3 tools/validate.py
@@ -20,5 +20,9 @@ shim-test: ## test the porter-shim control plane
 test: ## cloud-native test: ephemeral preview env + GitOps PR checks + evidence bundle
 	@echo "[continuum] test — scaffold: PR-driven preview environments + evidence"
 
-rollout: ## promote local → scale-up cluster (hyperswarm), signed images
-	@echo "[continuum] rollout — scaffold: promote via caps.infra.cluster-scaleup.hyperswarm"
+promotion-gate: ## rollout gate: require an APPROVE review verdict (fail-closed, evidence-emitting)
+	@test -n "$(VERDICT)" || (echo "[continuum] promotion-gate BLOCKED: set VERDICT=<review-receipt.json>" && exit 1)
+	python3 tools/promotion_gate.py --verdict $(VERDICT)
+
+rollout: promotion-gate ## promote local → scale-up cluster (hyperswarm), gated on an APPROVE review verdict
+	@echo "[continuum] rollout — promote via caps.infra.cluster-scaleup.hyperswarm (promotion gate passed)"
