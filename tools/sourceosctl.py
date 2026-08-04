@@ -50,11 +50,15 @@ def _sha(s: str) -> str:
 
 
 def run_workload(*, name, command, effect, sensitivity, scalable, gpu, image, subject,
-                 heartbeats_dir, key, apply=False, dry=False, admission=None, cost=1.0) -> dict:
+                 heartbeats_dir, key, apply=False, dry=False, admission=None, cost=1.0,
+                 inception=False) -> dict:
     """Core of `run` — testable without the CLI. Returns the full spine trace (or a placement)."""
     reg = mt.MeshRegistry.from_dir(heartbeats_dir)
     workload = {"name": name, "command": command, "effect": effect, "sensitivity": sensitivity,
                 "scalable": scalable, "needs_gpu": gpu, "image": image}
+    if inception:  # mount the agent-machine's persistent TopoLVM inception mount (k8s backend)
+        import devspace
+        workload["inception_pvc"] = devspace.INCEPTION_PVC
     policy = {"require_attestation": sensitivity == "sensitive"}
     if dry:
         return {"status": "placed", "decision": cp.place(workload, policy, reg.availability())}
@@ -77,7 +81,8 @@ def cmd_run(args) -> int:
     out = run_workload(name=args.name, command=args.command, effect=args.effect,
                        sensitivity=args.sensitivity, scalable=not args.no_scale, gpu=args.gpu,
                        image=args.image, subject=args.subject, heartbeats_dir=HEARTBEATS,
-                       key=_key(), apply=args.apply, dry=args.dry, admission=admission, cost=args.cost)
+                       key=_key(), apply=args.apply, dry=args.dry, admission=admission, cost=args.cost,
+                       inception=args.inception)
     if out["status"] == "denied":
         a = out["admission"]
         print(f"DENIED (fail-closed): {a['reason']}  [usage {a['usage']} vs quota {a['quota']}]")
@@ -143,6 +148,7 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--no-scale", action="store_true", help="keep it small (non-scalable)")
     r.add_argument("--subject", default="spiffe://sourceos/agent/dev", help="the requesting subject SPIFFE id")
     r.add_argument("--cost", type=float, default=1.0, help="cost units to charge against the subject's budget")
+    r.add_argument("--inception", action="store_true", help="mount the agent-machine's persistent TopoLVM inception mount (k8s)")
     r.add_argument("--apply", action="store_true", help="actually execute (local subprocess / kubectl apply)")
     r.add_argument("--dry", action="store_true", help="only decide placement; dispatch nothing")
     r.set_defaults(func=cmd_run)

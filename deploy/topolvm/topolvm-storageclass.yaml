@@ -1,0 +1,20 @@
+# TopoLVM StorageClass for the agent-machine inception mount (Edge/Fog design).
+#
+# TopoLVM gives topology-aware, LVM-backed, node-local persistent volumes — so the agent-machine's
+# inception mount lives on fast local disk and the pod is scheduled to the node that has capacity
+# (WaitForFirstConsumer). This is the storage class the DevSpace + agent-machine StatefulSet default
+# to (`storage_class="topolvm-provisioner"`).
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: topolvm-provisioner
+  labels:
+    sourceos.io/mount: inception
+provisioner: topolvm.io
+parameters:
+  # bind to a specific LVM device-class/volume-group configured in lvmd on the nodes.
+  "csi.storage.k8s.io/fstype": "xfs"
+  "topolvm.io/device-class": "ssd"
+volumeBindingMode: WaitForFirstConsumer   # schedule the pod where the LV can be carved
+allowVolumeExpansion: true
+reclaimPolicy: Delete

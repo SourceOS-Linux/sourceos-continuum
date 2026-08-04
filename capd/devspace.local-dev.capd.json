@@ -3,11 +3,14 @@
   "kind": "dev.inner-loop",
   "status": "experimental",
   "name": "SourceOS DevSpace — inner-loop dev-environment",
-  "description": "Nocalhost-style inner-loop over the continuum: an isolated per-user namespace, hot code sync into a running workload, a sidecar dev container, and port-forward + local debug — shortening the modify->result feedback loop. Consumes the control plane; surfaced to humans via the portal and to agents via the MCP ops surface (one governed source, two views).",
+  "description": "Nocalhost-style inner-loop over the continuum: an isolated per-user namespace (DevSpace), Signadot-style header-routed sandboxes that share a baseline, and the agent-machine as a StatefulSet with a per-replica TopoLVM inception mount. Consumes the control plane; surfaced to humans via the portal and to agents via the MCP ops surface (one governed source, two views).",
   "links": {
+    "engine": "tools/devspace.py",
     "portal": "tools/portal_server.py",
     "agent_surface": "tools/mcp_ops_server.py",
-    "reference_pattern": "Nocalhost DevSpace (inner-loop) — met and bettered: sovereign + evidence-emitting"
+    "inception_storage": "deploy/topolvm/ (TopoLVM StorageClass + runbook)",
+    "spec_witness": "docs/PATTERN_INTEGRATION.md",
+    "reference_pattern": "Nocalhost DevSpace + MeshSpace, Signadot sandboxes, StatefulSet + TopoLVM inception mount — met and bettered: sovereign, tenancy-labelled, grant + quota governed, evidence-emitting"
   },
   "composes_with": {
     "control_plane": "caps.infra.paas.continuum-local@0.1.0",
