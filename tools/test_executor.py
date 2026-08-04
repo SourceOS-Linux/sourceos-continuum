@@ -81,6 +81,15 @@ def test_k8s_apply_refuses_without_an_explicit_context():
             os.environ["SOURCEOS_KUBE_CONTEXT"] = saved
 
 
+def test_k8s_mounts_the_inception_pvc_when_requested():
+    d = _decision("k8s")
+    res = ex.execute({"command": "echo x", "effect": "exec", "inception_pvc": "inception-mount"},
+                     d, _grant(d, "exec"), session_id="sess_exec1", verifier=VERIFIER, apply=False)
+    spec = res["dispatch"]["manifest"]["spec"]["template"]["spec"]
+    assert spec["volumes"][0]["persistentVolumeClaim"]["claimName"] == "inception-mount"
+    assert spec["containers"][0]["volumeMounts"][0]["mountPath"] == "/var/lib/sourceos/inception"
+
+
 def test_descriptor_adapter_emits_a_backend_specific_descriptor():
     d = _decision("hpc-slurm")
     res = ex.execute({"command": "srun train", "effect": "compute"}, d, _grant(d, "compute"),

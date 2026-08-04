@@ -60,20 +60,23 @@ class K8sAdapter:
     backend = "k8s"
 
     def manifest(self, workload, decision, grant):
+        # Always set requests + limits (with small defaults) so pods are admissible under a DevSpace
+        # ResourceQuota, which requires them.
         res = workload.get("resource", {})
-        requests = {}
-        if res.get("cpu"):
-            requests["cpu"] = str(res["cpu"])
-        if res.get("mem"):
-            requests["memory"] = str(res["mem"])
+        requests = {"cpu": str(res.get("cpu", "100m")), "memory": str(res.get("mem", "128Mi"))}
         limits = dict(requests)
         if workload.get("needs_gpu"):
             limits["nvidia.com/gpu"] = "1"
         container = {"name": "workload",
-                     "image": workload.get("image", "busybox:1.36"),
-                     "command": shlex.split(workload["command"]) if workload.get("command") else ["true"]}
-        if requests or limits:
-            container["resources"] = {k: v for k, v in (("requests", requests), ("limits", limits)) if v}
+                     "image": workload.get("image") or "busybox:1.36",  # or-default: "" is falsy but present
+                     "command": shlex.split(workload["command"]) if workload.get("command") else ["true"],
+                     "resources": {"requests": requests, "limits": limits}}
+        pod_spec = {"restartPolicy": "Never", "containers": [container]}
+        # Mount the agent-machine's persistent inception mount (a TopoLVM-backed PVC) when asked.
+        pvc = workload.get("inception_pvc")
+        if pvc:
+            container["volumeMounts"] = [{"name": "inception", "mountPath": "/var/lib/sourceos/inception"}]
+            pod_spec["volumes"] = [{"name": "inception", "persistentVolumeClaim": {"claimName": pvc}}]
         return {
             "apiVersion": "batch/v1", "kind": "Job",
             "metadata": {"generateName": f"{workload.get('name', 'wl')}-",
@@ -82,7 +85,7 @@ class K8sAdapter:
                                     "sourceos.io/backend": "k8s"}},
             "spec": {"backoffLimit": 0, "ttlSecondsAfterFinished": 3600,
                      "template": {"metadata": {"labels": {"sourceos.io/grant-id": grant["grant_id"]}},
-                                  "spec": {"restartPolicy": "Never", "containers": [container]}}},
+                                  "spec": pod_spec}},
         }
 
     def dispatch(self, workload, decision, grant, *, apply):
