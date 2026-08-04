@@ -1,0 +1,41 @@
+{
+  "schema": "sourceos-continuum.suite-workloads.v1",
+  "note": "The app suite as first-class citizens of the one governed compute mesh. Each product declares its characteristic workload and the policy that governs where the compute plane may place it. A low-mem box runs the front-end; the heavy work scales out over the mesh under these policies. The dashboard runs place() for each of these against LIVE telemetry so you can see, right now, where each product's work would land.",
+  "workloads": [
+    {
+      "id": "noetica.reasoning",
+      "product": "Noetica",
+      "description": "Desktop reasoning app offloads heavy graph/LLM reasoning off the local box to the mesh. The reasoning corpus is the user's own — sensitive — so it may only run on trusted infra, attested.",
+      "workload": {"sensitivity": "sensitive", "scalable": true, "needs_gpu": true},
+      "policy": {"forbid_untrusted_for_sensitive": true, "require_attestation": true}
+    },
+    {
+      "id": "memory-mesh.holographic-recall",
+      "product": "memory-mesh",
+      "description": "The distributed memory / holographic-message fabric: embedding, recall, and holographic ops over the estate's memory. It holds memory, so it is sensitive and trusted-only + attested; it both provides nodes to the mesh and consumes it.",
+      "workload": {"sensitivity": "sensitive", "scalable": true, "needs_gpu": true},
+      "policy": {"forbid_untrusted_for_sensitive": true, "require_attestation": true, "prefer": ["k8s", "hpc-slurm"]}
+    },
+    {
+      "id": "turtletern.trinomial-turbulence",
+      "product": "TurtleTern",
+      "description": "The trinomial regime-aware pricer + Lorenz low-dim turbulence engine: embarrassingly-parallel numeric simulation over public math, no private data. The poster child for volunteer/HPC scale-out — free to burst onto the biggest grid the mesh offers.",
+      "workload": {"sensitivity": "normal", "scalable": true, "needs_gpu": true},
+      "policy": {"forbid_untrusted_for_sensitive": true}
+    },
+    {
+      "id": "goosenotes.index",
+      "product": "Goose Notes",
+      "description": "Personal-notes embedding + reindex: local-first and small most of the time, but a full reindex can batch-scale. Notes are personal, so trusted-only.",
+      "workload": {"sensitivity": "sensitive", "scalable": true, "needs_gpu": false},
+      "policy": {"forbid_untrusted_for_sensitive": true, "prefer": ["wasm-edge", "k8s"]}
+    },
+    {
+      "id": "bearbrowser.scan",
+      "product": "BearBrowser",
+      "description": "Offensive crawl/scan workloads. Not private data, but running attack tooling on volunteer/p2p boxes is a liability — governed onto trusted infra only, never the volunteer grid, regardless of scale pressure.",
+      "workload": {"sensitivity": "normal", "scalable": true, "needs_gpu": false},
+      "policy": {"allowed_backends": ["local", "k8s", "hpc-slurm", "wasm-edge"], "forbid_untrusted_for_sensitive": true}
+    }
+  ]
+}

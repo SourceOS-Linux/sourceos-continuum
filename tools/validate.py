@@ -18,9 +18,25 @@ REQUIRED = [
     "docs/LIFECYCLE.md",
     "docs/CONTINUUM_SCOPE.md",
     "capd/continuum.local-paas.capd.json",
+    "capd/compute-plane.mesh.capd.json",
+    "capd/devspace.local-dev.capd.json",
+    "capd/cloudshell-fog.capd.json",
+    "capd/knowledge-commons.mesh.capd.json",
     "tools/promotion_gate.py",
+    "tools/portal_server.py",
+    "tools/compute_plane.py",
+    "tools/mesh_telemetry.py",
+    "tools/mcp_a2a_grant.py",
+    "tools/commons.py",
 ]
 CAPD_KEYS = ("capability_id", "kind", "status", "links", "composes_with", "policy")
+# Every CapD in capd/ must carry the core keys and parse — not just the flagship control-plane one.
+EXTRA_CAPD_IDS = {
+    "capd/compute-plane.mesh.capd.json": "caps.compute.mesh-plane",
+    "capd/devspace.local-dev.capd.json": "caps.dev.devspace-inner-loop",
+    "capd/cloudshell-fog.capd.json": "caps.compute.cloudshell-fog",
+    "capd/knowledge-commons.mesh.capd.json": "caps.knowledge.commons",
+}
 
 errors: list[str] = []
 
@@ -41,6 +57,20 @@ if capd.exists():
             errors.append("capd scales_up_to must point at the hyperswarm scale-up capability")
     except json.JSONDecodeError as exc:
         errors.append(f"capd invalid json: {exc}")
+
+for rel, want_id in EXTRA_CAPD_IDS.items():
+    path = ROOT / rel
+    if not path.exists():
+        continue
+    try:
+        data = json.loads(path.read_text())
+        for key in CAPD_KEYS:
+            if key not in data:
+                errors.append(f"{rel} missing key: {key}")
+        if data.get("capability_id", "").split("@")[0] != want_id:
+            errors.append(f"{rel} capability_id drift (want {want_id})")
+    except json.JSONDecodeError as exc:
+        errors.append(f"{rel} invalid json: {exc}")
 
 for rel in ("README.md", "docs/LIFECYCLE.md", "docs/CONTINUUM_SCOPE.md"):
     path = ROOT / rel

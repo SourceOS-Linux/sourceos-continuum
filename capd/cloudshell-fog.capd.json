@@ -1,0 +1,49 @@
+{
+  "capability_id": "caps.compute.cloudshell-fog@0.1.0",
+  "kind": "compute.zero-trust-fog",
+  "status": "experimental",
+  "name": "Sovereign Agentic Cloud-Shell — zero-trust MCP-A2A fog deployment",
+  "description": "The full Attest -> Decide -> Grant -> verify-at-node -> enforce-constraints flow from the cloud-shell fog spec, made first-class over the continuum. A low-mem box starts a session; the Control-Plane Agent (compute_plane.place) decides a fog node from live HyperSwarm discovery (mesh_telemetry); the MCP-A2A Policy Authority attests (TPM/TEE + cosign) then mints a signed, session-bound Grant carrying its constraints (mcp_a2a_grant.issue_grant); the fog node's Policy Gate re-verifies that Grant on attach and on every PTY/FS op (mcp_a2a_grant.verify_grant). Fail-closed at every step; every decision sealed to the append-only ledger.",
+  "links": {
+    "control_plane_agent": "tools/compute_plane.py",
+    "hyperswarm_discovery": "tools/mesh_telemetry.py",
+    "policy_authority": "tools/mcp_a2a_grant.py",
+    "policy_gate": "tools/mcp_a2a_grant.py",
+    "capability_registry": "capd/",
+    "agent_surface": "tools/mcp_ops_server.py",
+    "portal": "tools/portal_server.py",
+    "supply_chain_gate": "prophet-platform/tools/advisory_check.py + attest.py (estate)",
+    "ledger": "artifacts/gate-decisions + mcp-receipts (sealed)",
+    "spec_witness": "docs/CLOUDSHELL_FOG.md",
+    "shape_authority": "SourceOS-Linux/mcp-a2a-zero-trust (canonical Grant/AttestationBundle/QuorumProof; vendored hash-pinned at schemas/a2a/)"
+  },
+  "composes_with": {
+    "compute_plane": "caps.compute.mesh-plane@0.1.0",
+    "inner_loop": "caps.dev.devspace-inner-loop@0.1.0",
+    "control_plane": "caps.infra.paas.continuum-local@0.1.0",
+    "scales_up_to": "caps.infra.cluster-scaleup.hyperswarm@0.1.0"
+  },
+  "policy": {
+    "zero_trust": true,
+    "attest_decide_grant": true,
+    "fail_closed": true,
+    "evidence_emitting": true,
+    "session_bound_grants": true,
+    "quorum_when_required": true,
+    "read_only_portal": true
+  },
+  "flow": [
+    "0  login / refresh (IdP OIDC/OAuth2 + optional FIDO2)",
+    "1  start shell / agent session (Browser Terminal UI over WSS/WebTransport)",
+    "2  SessionRequest: capability + agent (Console API -> Control-Plane Agent)",
+    "3  resolve CapD + MCP tool schemas (Capability Registry)",
+    "4  verify artifact: OCI digest + SBOM + signature (Supply-chain Gate)",
+    "5  find candidate nodes (HyperSwarm Mesh discovery / mesh_telemetry)",
+    "6  route to selected node",
+    "7  policy eval: user + node + capability (MCP-A2A Policy Authority)",
+    "8  issue Grant, session-bound; +QuorumProof when required (Key Authority HSM/KMS)",
+    "9  TriRPC attach over a Grant-bound channel (Edge Gateway <-> Fog Node)",
+    "10 authorize attach (fog-node MCP-A2A Policy Gate: verify Grant)",
+    "11 allow PTY/FS ops, enforce constraints (Shell Runtime Container/Pod sandbox)"
+  ]
+}
