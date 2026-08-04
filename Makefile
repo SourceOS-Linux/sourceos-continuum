@@ -1,6 +1,6 @@
 # SourceOS Continuum — lifecycle entry points.
 # Control-plane targets delegate to Makefile.porter (the rehomed Porter control plane).
-.PHONY: validate onboard dev-up dev-down shim-test test tools-test rollout promotion-gate portal compute mesh-demo grant commons mcp spine run loop verify lease sphere push push-webhook rollback edge login sso provision deploy inference availability
+.PHONY: validate onboard dev-up dev-down shim-test test tools-test rollout promotion-gate portal compute mesh-demo grant commons reuse mcp spine run loop verify lease sphere push push-webhook rollback edge login sso provision deploy inference availability
 
 validate: ## repo hygiene + CapD validity
 	python3 tools/validate.py
@@ -26,6 +26,9 @@ grant: ## demo the zero-trust attach flow: Attest -> Decide -> Grant -> verify-a
 
 commons: ## reproducible knowledge commons: ingest the estate's CapDs + workloads as citable records
 	python3 tools/commons.py
+
+reuse: ## resolution reuse (ARM): deposit an RCA Resolution asset + Next-Best-Action lookup + feedback
+	cd tools && python3 resolution_registry.py
 
 spine: ## run the full execution spine demo: place -> grant -> verify -> dispatch -> sealed receipt
 	cd tools && python3 executor.py

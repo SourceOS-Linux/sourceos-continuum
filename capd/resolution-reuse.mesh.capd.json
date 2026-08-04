@@ -1,0 +1,27 @@
+{
+  "capability_id": "caps.knowledge.resolution-reuse@0.1.0",
+  "kind": "knowledge.arm-resolution",
+  "status": "experimental",
+  "name": "Resolution reuse — RCA becomes a reusable ARM/commons asset with Next-Best-Action",
+  "description": "Closes the ARM feedback loop for root-cause work (the IBM Asset-Reuse-Manager pattern: Domain → Category → Asset → Recommendation → Feedback; and 'Next Best Action for a Case'). A Resolution asset produced by the RCA pipeline — a tagged, content-addressed record carrying the root-cause graph SVG + remediation — is deposited into the real continuum commons as asset_type='resolution', keyed by its failure-class category, and marked reproducible iff it carries the graph digest that rebuilds its evidence. When the same failure class recurs, next_best_action() retrieves the prior resolution to apply (recommendation, not a fresh investigation), and apply_resolution() feeds the ARM reuse loop (commons.record_use) so the most-reused, most-successful resolutions rank first. A thin adapter over the existing commons — no parallel store — so resolutions are first-class, searchable, reusable estate knowledge.",
+  "links": {
+    "engine": "tools/resolution_registry.py",
+    "commons": "tools/commons.py",
+    "producer": "prophet-platform tools/resolution_asset.py (the RCA→Resolution asset + SVG)",
+    "graph_ingest": "prophet-platform tools/rca_to_knowledge_update.py (RCA→HellGraph)",
+    "reference_pattern": "IBM Asset Reuse Manager (ARM) — Domain/Category/Asset/Recommendation/Feedback + Next-Best-Action — met sovereign: content-addressed, reproducibility-gated, reuse-scored"
+  },
+  "composes_with": {
+    "commons": "caps.knowledge.commons@0.1.0",
+    "control_plane": "caps.infra.paas.continuum-local@0.1.0",
+    "scales_up_to": "caps.infra.cluster-scaleup.hyperswarm@0.1.0"
+  },
+  "policy": {
+    "availability": "needs-work",
+    "reproducibility_gated": true,
+    "next_best_action": true,
+    "reuse_feedback_loop": true,
+    "no_parallel_store": true,
+    "evidence_emitting": true
+  }
+}
