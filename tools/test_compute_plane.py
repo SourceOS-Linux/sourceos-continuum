@@ -81,6 +81,31 @@ def test_receipt_seal_is_deterministic_and_covers_the_decision():
     assert reseal == d["receipt_digest"]
 
 
+def test_needs_firewall_only_a_backend_that_provably_provides_the_need_qualifies():
+    # NEEDS a TEE -> only hpc-slurm (provably tee) qualifies, even though k8s is preferred + available.
+    d = cp.place({"sensitivity": "normal", "scalable": True, "needs": {"tee": True}},
+                 {"prefer": ["k8s"]}, {b: 100 for b in cp.BACKENDS})
+    assert d["backend"] == "hpc-slurm"
+    assert "NEEDS firewall" in d["excluded"]["k8s"]  # a Want (prefer) can't satisfy a Need
+
+
+def test_needs_firewall_blocks_when_no_backend_provably_provides_the_need():
+    d = cp.place({"sensitivity": "normal", "scalable": True, "needs": {"residency": "eu"}},
+                 {}, {b: 100 for b in cp.BACKENDS})
+    assert d["backend"] is None  # fail-closed: nothing provably provides residency:eu
+
+
+def test_needs_no_egress_selects_only_local():
+    d = cp.place({"sensitivity": "normal", "scalable": False, "needs": {"no_egress": True}},
+                 {}, {b: 100 for b in cp.BACKENDS})
+    assert d["backend"] == "local"
+
+
+def test_no_needs_is_backward_compatible():
+    d = cp.place({"sensitivity": "normal", "scalable": True}, {}, {b: 100 for b in cp.BACKENDS})
+    assert d["backend"] == "volunteer-boinc"  # unchanged
+
+
 def test_connector_backend_is_external_barred_for_sensitive_but_open_to_normal():
     # a vendor connector is untrusted: sensitive work refuses it (blocks); normal work may use it.
     blocked = cp.place({"sensitivity": "sensitive", "scalable": True},

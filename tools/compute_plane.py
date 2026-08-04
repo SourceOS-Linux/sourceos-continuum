@@ -36,6 +36,33 @@ BACKENDS = {
     "connector":      {"kind": "connector",     "trust": "untrusted", "elasticity": 9,  "gpu": True},
 }
 
+# ATTESTED capabilities each backend can PROVABLY provide. The Needs/Wants firewall: a hard Need may
+# only be satisfied by a backend that provably provides it — a soft Want never masquerades as a Need.
+BACKEND_CAPS = {
+    "local":           {"residency": "local", "no_egress": True},
+    "k8s":             {"residency": "cluster", "fips": True},
+    "hpc-slurm":       {"residency": "cluster", "fips": True, "tee": True},
+    "wasm-edge":       {"residency": "edge", "deterministic": True},
+    "p2p-mesh":        {},
+    "volunteer-boinc": {},
+    "blockchain-rlc":  {},
+    "connector":       {"residency": "vendor"},
+}
+
+
+def _needs_met(needs: dict, caps: dict) -> tuple[bool, list]:
+    """A backend meets a Need only if it provably provides it. `needs` is {capability: requirement}:
+    True = must be present/truthy; a string = must equal; a list = must be one of."""
+    unmet = []
+    for k, req in needs.items():
+        have = caps.get(k)
+        ok = (bool(have) if req is True
+              else have in req if isinstance(req, (list, tuple, set))
+              else have == req)
+        if not ok:
+            unmet.append(k)
+    return (not unmet, unmet)
+
 
 def _seal(body: dict) -> str:
     return "sha256:" + hashlib.sha256(
@@ -56,12 +83,14 @@ def place(workload: dict, policy: dict, availability: dict) -> dict:
     sensitive = workload.get("sensitivity") == "sensitive"
     needs_gpu = bool(workload.get("needs_gpu"))
     scalable = bool(workload.get("scalable"))
+    needs = workload.get("needs") or {}  # hard, attested requirements (Needs/Wants firewall)
     allowed = set(policy.get("allowed_backends") or BACKENDS.keys())
     forbid_untrusted = policy.get("forbid_untrusted_for_sensitive", True)
 
     excluded: dict[str, str] = {}
     candidates = []
     for bid, spec in BACKENDS.items():
+        met, unmet = _needs_met(needs, BACKEND_CAPS.get(bid, {})) if needs else (True, [])
         if bid not in allowed:
             excluded[bid] = "not in project policy allowed_backends"
         elif availability.get(bid, 0) <= 0:
@@ -70,6 +99,8 @@ def place(workload: dict, policy: dict, availability: dict) -> dict:
             excluded[bid] = "no GPU"
         elif sensitive and forbid_untrusted and spec["trust"] == "untrusted":
             excluded[bid] = "GOVERNANCE: sensitive workload may not run on an untrusted backend"
+        elif not met:
+            excluded[bid] = f"NEEDS firewall: does not provably provide {', '.join(unmet)}"
         else:
             candidates.append(bid)
 
