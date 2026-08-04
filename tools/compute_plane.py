@@ -25,6 +25,10 @@ from datetime import datetime, timezone
 # a coarse scale-out capacity rank (1 = a single laptop, 10 = a global volunteer grid).
 BACKENDS = {
     "local":          {"kind": "local",        "trust": "trusted",   "elasticity": 1,  "gpu": False},
+    # k3s-edge: the sovereign agent-machine — lightweight SINGLE-MASTER k3s (in-docker on the box or
+    # on a server). No HA redundancy (an ephemeral dev node doesn't need it); registers UP into a
+    # cloud pool as a worker (Giant Swarm, reversed) and its workloads evolve up to full k8s.
+    "k3s-edge":       {"kind": "k3s-lightweight", "trust": "trusted", "elasticity": 3, "gpu": False},
     "k8s":            {"kind": "container",     "trust": "trusted",   "elasticity": 6,  "gpu": True},
     "hpc-slurm":      {"kind": "hpc",           "trust": "trusted",   "elasticity": 9,  "gpu": True},
     "wasm-edge":      {"kind": "wasm",          "trust": "trusted",   "elasticity": 7,  "gpu": False},
@@ -40,6 +44,7 @@ BACKENDS = {
 # only be satisfied by a backend that provably provides it — a soft Want never masquerades as a Need.
 BACKEND_CAPS = {
     "local":           {"residency": "local", "no_egress": True},
+    "k3s-edge":        {"residency": "edge", "single_master": True},
     "k8s":             {"residency": "cluster", "fips": True},
     "hpc-slurm":       {"residency": "cluster", "fips": True, "tee": True},
     "wasm-edge":       {"residency": "edge", "deterministic": True},

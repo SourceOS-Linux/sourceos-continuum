@@ -48,6 +48,9 @@ sphere: ## data-sphere demo: immutable dm-verity sphere, construction-tenancy, i
 push: ## git-push deploy flow demo: build -> deploy -> per-branch preview
 	cd tools && python3 deploy_flow.py
 
+edge: ## edge-worker demo: register the agent-machine into a cloud pool + evolve topology (reversed Giant Swarm)
+	cd tools && python3 edge_worker.py
+
 login: ## login/session demo: authenticate the front door (fail-closed)
 	cd tools && python3 login.py
 
