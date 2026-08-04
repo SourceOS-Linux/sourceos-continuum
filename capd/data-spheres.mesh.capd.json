@@ -1,0 +1,30 @@
+{
+  "capability_id": "caps.data.spheres@0.1.0",
+  "kind": "data.governed-sphere",
+  "status": "experimental",
+  "name": "Data Spheres — ring-fenced, immutable, provenance-tracked data",
+  "description": "A data sphere is the trusted-data-sphere pattern (immutable + persistent + token-gated + provenance) fused with our commons record + grant + Needs-firewall, and hardened by the live-mount-table analysis: integrity by construction (squashfs/erofs + dm-verity with a pinned root hash, not readOnly:true), tenancy by construction (the isolation key in the mount source ref, session-scoped and unforgeable, not a policy), direction as a first-class axis (ingress|egress|bidirectional|none) with an at-most-one-egress chokepoint invariant, and backend as a function of intent x link_availability x durability (reference-mount over reliable links; copy+reconcile only when an intermittent link forces divergence). Reading a sphere requires a Grant with effect:read bound to the sphere id + content digest; access is fail-closed.",
+  "links": {
+    "engine": "tools/data_sphere.py",
+    "grant_authority": "tools/mcp_a2a_grant.py",
+    "commons": "tools/commons.py",
+    "placement": "tools/compute_plane.py",
+    "spec_witness": "docs/MOUNT_TAXONOMY.md",
+    "reference_pattern": "Trusted Data Spheres (token-gated immutable provenance) + the live-mount-table analysis (dm-verity integrity, construction-tenancy, direction axis + egress chokepoint, intent x link x durability lattice)"
+  },
+  "composes_with": {
+    "commons": "caps.knowledge.commons@0.1.0",
+    "compute_plane": "caps.compute.mesh-plane@0.1.0",
+    "control_plane": "caps.infra.paas.continuum-local@0.1.0",
+    "scales_up_to": "caps.infra.cluster-scaleup.hyperswarm@0.1.0"
+  },
+  "policy": {
+    "immutable": true,
+    "integrity_by_construction": true,
+    "tenancy_by_construction": true,
+    "grant_gated_read": true,
+    "single_egress_chokepoint": true,
+    "residency_ring_fenced": true,
+    "evidence_emitting": true
+  }
+}

@@ -24,6 +24,7 @@ REQUIRED = [
     "capd/knowledge-commons.mesh.capd.json",
     "capd/self-healing-loop.mesh.capd.json",
     "capd/volunteer-mesh-verification.mesh.capd.json",
+    "capd/data-spheres.mesh.capd.json",
     "tools/promotion_gate.py",
     "tools/portal_server.py",
     "tools/compute_plane.py",
@@ -39,6 +40,7 @@ REQUIRED = [
     "tools/work_unit.py",
     "tools/lease_scheduler.py",
     "tools/devmode.py",
+    "tools/data_sphere.py",
 ]
 CAPD_KEYS = ("capability_id", "kind", "status", "links", "composes_with", "policy")
 # Every CapD in capd/ must carry the core keys and parse — not just the flagship control-plane one.
@@ -49,6 +51,7 @@ EXTRA_CAPD_IDS = {
     "capd/knowledge-commons.mesh.capd.json": "caps.knowledge.commons",
     "capd/self-healing-loop.mesh.capd.json": "caps.compute.self-healing-loop",
     "capd/volunteer-mesh-verification.mesh.capd.json": "caps.compute.volunteer-mesh-verification",
+    "capd/data-spheres.mesh.capd.json": "caps.data.spheres",
 }
 
 errors: list[str] = []
