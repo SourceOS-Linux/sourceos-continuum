@@ -59,7 +59,7 @@ def _lifecycle() -> dict:
 
 def _evidence(limit: int = 20) -> dict:
     bundles = []
-    for name in ("gate-decisions", "mcp-receipts"):
+    for name in ("gate-decisions", "mcp-receipts", "webhook-receipts"):
         p = _ROOT / "artifacts" / name
         if p.is_dir():
             for f in sorted(p.glob("*.json"), reverse=True)[:limit]:

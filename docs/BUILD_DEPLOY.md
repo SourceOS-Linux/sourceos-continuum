@@ -47,5 +47,24 @@ git push  ──>  detect(source)  ──>  pack build (Paketo)  ──>  reprod
 
 `build_plan()` is content-addressed (same source → same image → reproducible), fail-closed (no
 buildpack match → refuse, don't guess), and its image flows straight into the executor's k8s manifest
-(verified in tests). The only remaining piece is the **push trigger** (a webhook that runs this on a
-`git push` and opens the preview) — the ergonomic wrapper over machinery that's now all here.
+(verified in tests).
+
+## The push trigger (`push_webhook.py`)
+
+The last piece — what actually *calls* `on_push` when a real push lands — is a governed webhook
+receiver the git host (Gitea/GitHub) POSTs to. It is **fail-closed at the door**:
+
+```
+POST /hooks/<tenant>/<app>
+  ──>  verify HMAC-SHA256 over the RAW body (constant-time)      ← unsigned/forged ⇒ REJECTED, no build
+  ──>  parse the push event (branch? tag? delete?)               ← tags & deletes ⇒ ignored
+  ──>  resolve the source tree at the pushed SHA (checkout)
+  ──>  deploy_flow.on_push()  ──>  build ──> preview
+  ──>  a SEALED receipt, bound to the exact body digest          ← the secret is never echoed
+```
+
+Every git host signs deliveries (GitHub `X-Hub-Signature-256: sha256=…`, Gitea `X-Gitea-Signature: …`);
+we verify against the project's per-tenant secret **before any work starts**. A push that isn't
+validly signed is rejected with a sealed receipt and **no build is ever started** — the same
+fail-closed posture as the rest of the stack. So `git push` now literally deploys: the Vercel/Heroku
+ergonomic, sovereign and governed, with the trigger itself a zero-trust gate rather than an open hook.
