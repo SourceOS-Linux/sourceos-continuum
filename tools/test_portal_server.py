@@ -47,6 +47,29 @@ def test_unknown_path_is_404():
     assert status == 404
 
 
+def test_pwa_manifest_and_service_worker_are_served():
+    st, ct, body = ps.route("/manifest.webmanifest")
+    assert st == 200 and "manifest" in ct and "Continuum" in body and "standalone" in body
+    st2, ct2, _ = ps.route("/sw.js")
+    assert st2 == 200 and "javascript" in ct2
+
+
+def test_console_is_installable_and_shows_sovereign_inference():
+    html = ps.route("/")[2]
+    assert "rel=manifest" in html and "Sovereign inference" in html and "epbadge" in html
+
+
+def test_inference_api_is_sovereign_first_and_fail_closed_without_endpoints():
+    with tempfile.TemporaryDirectory() as td:
+        old, ps._HEARTBEATS = ps._HEARTBEATS, pathlib.Path(td)  # no live GPU backend -> no sovereign endpoint
+        try:
+            d = json.loads(ps.route("/api/inference")[2])
+            assert "endpoint" in d and d["sovereign_endpoints"] == []
+            assert all(m["route"] == "blocked" for m in d["models"])  # never a cloud LLM
+        finally:
+            ps._HEARTBEATS = old
+
+
 def test_devspace_capability_is_surfaced():
     caps = json.loads(ps.route("/api/capabilities")[2])["capabilities"]
     ids = {c.get("capability_id") for c in caps}

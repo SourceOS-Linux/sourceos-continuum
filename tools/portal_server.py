@@ -114,8 +114,55 @@ def _commons() -> dict:
                          "cite": r["cite"]} for r in recs]}
 
 
+def _endpoint() -> str:
+    """Which surface this portal is — the always-on cloud 'twin' or the 'box' (direct/LAN). Set
+    SOURCEOS_ENDPOINT=twin on the twin; defaults to box."""
+    import os
+    return os.environ.get("SOURCEOS_ENDPOINT", "box")
+
+
+def _inference() -> dict:
+    """Sovereign-inference posture: our own models, and where a sensitive prompt would route (never a
+    cloud LLM). Sovereign endpoints = live trusted GPU backends."""
+    inf = _sib("inference")
+    reg = _registry()
+    avail = reg.availability()
+    sovereign_up = [b for b in ("hpc-slurm", "k8s") if avail.get(b, 0) > 0]
+    models = [inf.model_sphere(name=n, version=v, weights_digest="sha256:" + "ab" * 32,
+                               params_b=p, engine="vllm")
+              for (n, v, p) in [("llama-3-8b", "q4", 8), ("mixtral-8x7b", "q4", 47), ("nomic-embed", "f16", 0.1)]]
+    return {"endpoint": _endpoint(),
+            "posture": "sovereign-first — sensitive inference never leaves for a cloud LLM",
+            "sovereign_endpoints": sovereign_up,
+            "models": [{"model": m["model_name"], "params_b": m["params_b"],
+                        "route": inf.route_inference(model=m, sovereign_endpoints=sovereign_up,
+                                                     prompt_sensitivity="sensitive")["route"]}
+                       for m in models]}
+
+
+_MANIFEST = json.dumps({
+    "name": "SourceOS Continuum", "short_name": "Continuum", "start_url": "/", "scope": "/",
+    "display": "standalone", "background_color": "#0b0d12", "theme_color": "#0b0d12",
+    "description": "See and reach your infrastructure — twin or box.",
+    "icons": [{"src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>"
+               "<rect width='100' height='100' rx='20' fill='%230b0d12'/><circle cx='50' cy='50' r='28' fill='%237ee2a8'/>"
+               "<circle cx='24' cy='30' r='7' fill='%238fb8ff'/><circle cx='76' cy='30' r='7' fill='%238fb8ff'/></svg>",
+               "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}]})
+
+# cache-first service worker so the console still loads on a flaky mobile link (offline-ish shell).
+_SW = ("const C='continuum-v1';"
+       "self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(C).then(c=>c.add('/')))});"
+       "self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));"
+       "self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;"
+       "e.respondWith(fetch(e.request).then(r=>{const cp=r.clone();caches.open(C).then(c=>c.put(e.request,cp));return r})"
+       ".catch(()=>caches.match(e.request)))});")
+
+
 _CONSOLE = """<!doctype html><html lang=en><head><meta charset=utf-8>
-<meta name=viewport content="width=device-width,initial-scale=1"><title>SourceOS Continuum — Console</title>
+<meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><title>SourceOS Continuum — Console</title>
+<meta name=theme-color content=#0b0d12><link rel=manifest href=/manifest.webmanifest>
+<meta name=apple-mobile-web-app-capable content=yes><meta name=apple-mobile-web-app-status-bar-style content=black-translucent>
+<meta name=apple-mobile-web-app-title content=Continuum>
 <style>
 :root{color-scheme:light dark}body{font:15px/1.5 system-ui,sans-serif;margin:0;background:#0b0d12;color:#e8ecf4}
 header{padding:20px 28px;border-bottom:1px solid #232838;background:#11141d}
@@ -128,8 +175,8 @@ h2{margin:0 0 10px;font-size:14px;letter-spacing:.04em;text-transform:uppercase;
 .pill.exp{background:#2f2a1a;color:#e2c77e}code{color:#8fb8ff}.muted{color:#6b7488;font-size:13px}
 .gov{color:#7ee2a8;font-size:12px}
 </style></head><body>
-<header><h1>SourceOS Continuum — Developer Console</h1>
-<div class=sub>Read-only view of the governed surface. Actions run through the MCP surface + fail-closed promotion gate.</div></header>
+<header><h1>SourceOS Continuum — Developer Console <span id=epbadge class=pill>…</span></h1>
+<div class=sub>Read-only view of the governed surface. Actions run through the MCP surface + fail-closed promotion gate. Installable on mobile; reaches the twin (always-on) or the box (direct/LAN).</div></header>
 <main>
 <section id=caps><h2>Capabilities</h2><div class=muted>loading…</div></section>
 <section id=life><h2>Lifecycle</h2><div class=muted>loading…</div></section>
@@ -144,6 +191,9 @@ h2{margin:0 0 10px;font-size:14px;letter-spacing:.04em;text-transform:uppercase;
 <div class=muted>Every capability + workload as a citable, content-addressed record (Zenodo-style). <span class=gov>reproducible</span> = provenance carries the digests to reproduce it; <span class=muted>declared</span> = registered but not yet reproducibility-backed.</div>
 <div id=commonssum class=muted style=margin-top:8px></div>
 <div id=commonsbody class=muted style=margin-top:10px>loading…</div></section>
+<section id=infer><h2>Sovereign inference &mdash; our own LLMs</h2>
+<div class=muted>Models are immutable data spheres served on trusted GPU nodes. A <b>sensitive</b> prompt routes to a sovereign endpoint or <span class=gov>blocks</span> &mdash; it never leaves for a cloud LLM.</div>
+<div id=inferbody class=muted style=margin-top:10px>loading…</div></section>
 <section id=evi><h2>Sealed evidence (latest)</h2><div class=muted>loading…</div></section>
 </main>
 <script>
@@ -171,6 +221,13 @@ j('/api/commons').then(d=>{
  document.getElementById('commonsbody').innerHTML=
  d.records.map(r=>`<div class=row><span><code>${esc(r.commons_id.split('+')[0])}</code> <span class=muted>${esc(r.asset_type)}</span></span>`+
  `<span class="pill ${r.reproducibility==='reproducible'?'':'exp'}">${esc(r.reproducibility)}</span></div>`).join('')})
+j('/api/inference').then(d=>{
+ document.getElementById('epbadge').textContent=(d.endpoint||'box')==='twin'?'twin':'box';
+ document.getElementById('inferbody').innerHTML=
+ `<div class=muted style=margin-bottom:6px>${esc(d.posture)} &middot; sovereign endpoints: ${esc((d.sovereign_endpoints||[]).join(', ')||'none up')}</div>`+
+ d.models.map(m=>`<div class=row><span><code>${esc(m.model)}</code> <span class=muted>${esc(m.params_b)}B</span></span>`+
+ `<span class="pill ${m.route==='sovereign'?'':'exp'}">${esc(m.route)}</span></div>`).join('')})
+if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{})}
 </script></body></html>"""
 
 
@@ -181,9 +238,14 @@ def route(path: str) -> tuple[int, str, str]:
         return 200, "text/html; charset=utf-8", _CONSOLE
     if path == "/healthz":
         return 200, "text/plain", "ok"
+    if path == "/manifest.webmanifest":
+        return 200, "application/manifest+json", _MANIFEST
+    if path == "/sw.js":
+        return 200, "application/javascript", _SW
     api = {"/api/capabilities": _capabilities, "/api/lifecycle": _lifecycle,
            "/api/evidence": _evidence, "/api/compute": _compute,
-           "/api/mesh": _mesh, "/api/placements": _placements, "/api/commons": _commons}
+           "/api/mesh": _mesh, "/api/placements": _placements, "/api/commons": _commons,
+           "/api/inference": _inference}
     if path in api:
         return 200, "application/json", json.dumps(api[path](), indent=2, sort_keys=True)
     return 404, "text/plain", "not found"
