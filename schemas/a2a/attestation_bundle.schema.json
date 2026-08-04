@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sourceos.local/schemas/canonical/attestation_bundle.schema.json",
+  "title": "AttestationBundle",
+  "type": "object",
+  "required": [
+    "subject",
+    "results",
+    "evidence_refs"
+  ],
+  "properties": {
+    "subject": {
+      "type": "object",
+      "required": [
+        "spiffe_id",
+        "aum_digest"
+      ],
+      "properties": {
+        "spiffe_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "aum_digest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "results": {
+      "type": "object",
+      "required": [
+        "tpm_valid",
+        "cosign_valid"
+      ],
+      "properties": {
+        "tpm_valid": {
+          "type": "boolean"
+        },
+        "cosign_valid": {
+          "type": "boolean"
+        },
+        "fido2_valid": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "evidence_refs": {
+      "type": "object",
+      "properties": {
+        "tpm_quote_ref": {
+          "type": "string"
+        },
+        "cosign_bundle_ref": {
+          "type": "string"
+        },
+        "fido2_attest_ref": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

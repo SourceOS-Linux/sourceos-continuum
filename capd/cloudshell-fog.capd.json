@@ -14,7 +14,8 @@
     "portal": "tools/portal_server.py",
     "supply_chain_gate": "prophet-platform/tools/advisory_check.py + attest.py (estate)",
     "ledger": "artifacts/gate-decisions + mcp-receipts (sealed)",
-    "spec_witness": "docs/CLOUDSHELL_FOG.md"
+    "spec_witness": "docs/CLOUDSHELL_FOG.md",
+    "shape_authority": "SourceOS-Linux/mcp-a2a-zero-trust (canonical Grant/AttestationBundle/QuorumProof; vendored hash-pinned at schemas/a2a/)"
   },
   "composes_with": {
     "compute_plane": "caps.compute.mesh-plane@0.1.0",

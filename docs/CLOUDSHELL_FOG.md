@@ -42,3 +42,17 @@ node — the Decide stage refuses them first (`compute_plane`), and the Authorit
 Grant against a blocked or unattested decision.
 
 See `tools/test_mcp_a2a_grant.py` (Authority + Gate) and `tools/test_compute_plane.py` (Decide).
+
+## Shape conformance — we consume the canonical spec, we do not fork it
+
+The Grant, AttestationBundle, and QuorumProof that `tools/mcp_a2a_grant.py` emits/consumes are the
+**canonical** shapes owned by `SourceOS-Linux/mcp-a2a-zero-trust` (the estate's zero-trust authority
+repo — "owns the zero-trust authority model … grant request, grant decision, and grant ledger
+contracts"). Those schemas are vendored here under `schemas/a2a/`, **hash-pinned** to the authority's
+`schemas/index.json` (see `schemas/a2a/PROVENANCE.md`), and `test_mcp_a2a_grant.py` validates every
+emitted Grant / QuorumProof / AttestationBundle against them. So `issue_grant()` produces a `Grant`
+with the canonical `binding` / `capability` / `constraints` / `policy_hash` / `quorum_proof` /
+`evidence_refs` / `sig{issuer,sig}`, and `verify_grant()` returns a canonical `tool_grant.validate`
+result `{valid, expired, revoked, reason}` — identical to `examples/grant.example.json` and
+`examples/tool_grant_check.example.json` in the authority repo. If the authority updates a schema,
+re-vendor and re-pin; the authority stays the source of truth for the shape.
