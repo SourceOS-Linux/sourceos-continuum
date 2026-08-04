@@ -80,6 +80,13 @@ def test_valid_signature_but_non_json_body_is_rejected():
     assert d["status"] == "rejected" and "malformed" in d["reason"]
 
 
+def test_valid_signature_but_non_object_json_is_rejected_not_crashed():
+    # a validly-signed but non-object body ([], 123, "x") must reject cleanly, never raise (no 500).
+    for raw in (b"[]", b"123", b'"a string"', b"null"):
+        d = pw.handle_push(secret=_SECRET, sig_header=_sign(raw), raw_body=raw, project=_PROJECT)
+        assert d["status"] == "rejected" and "deploy" not in d, raw
+
+
 def test_no_matching_buildpack_is_build_failed_not_deployed():
     raw = _raw(_payload(added=("README.md",), modified=("LICENSE",)))
     d = pw.handle_push(secret=_SECRET, sig_header=_sign(raw), raw_body=raw, project=_PROJECT)

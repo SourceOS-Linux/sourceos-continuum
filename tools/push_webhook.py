@@ -46,6 +46,11 @@ def _digest(raw_body: bytes) -> str:
     return "sha256:" + hashlib.sha256(raw_body).hexdigest()
 
 
+def _obj(x) -> dict:
+    """A dict or {} — defensive access into an authenticated-but-arbitrary JSON payload."""
+    return x if isinstance(x, dict) else {}
+
+
 def _seal(body: dict) -> str:
     return "sha256:" + hashlib.sha256(
         json.dumps(body, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
@@ -68,14 +73,15 @@ def parse_push_event(payload: dict) -> dict:
     after = payload.get("after")
     changed = sorted({f
                       for c in (payload.get("commits") or [])
+                      if isinstance(c, dict)
                       for key in ("added", "modified")
                       for f in (c.get(key) or [])})
     return {
         "ref": ref,
         "is_branch": is_branch,
         "branch": ref[len("refs/heads/"):] if is_branch else None,
-        "repo": (payload.get("repository") or {}).get("name"),
-        "pusher": (payload.get("pusher") or {}).get("name") or (payload.get("sender") or {}).get("login"),
+        "repo": _obj(payload.get("repository")).get("name"),
+        "pusher": _obj(payload.get("pusher")).get("name") or _obj(payload.get("sender")).get("login"),
         "after": after,
         "deleted": bool(payload.get("deleted")) or after == _ZERO_SHA,
         "changed_files": changed,
@@ -120,6 +126,10 @@ def handle_push(*, secret: str, sig_header: str, raw_body: bytes, project: dict,
     except (UnicodeDecodeError, json.JSONDecodeError):
         return _finish({**decision, "status": "rejected", "accepted": False,
                         "reason": "signature valid but body is not JSON — malformed push payload"},
+                       receipts_dir)
+    if not isinstance(payload, dict):
+        return _finish({**decision, "status": "rejected", "accepted": False,
+                        "reason": "signature valid but body is not a JSON object — malformed push payload"},
                        receipts_dir)
 
     ev = parse_push_event(payload)
