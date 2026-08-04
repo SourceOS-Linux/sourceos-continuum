@@ -17,6 +17,21 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parent.parent
+_TOOLS = Path(__file__).resolve().parent
+_HEARTBEATS = _ROOT / "artifacts" / "mesh-heartbeats"
+
+
+def _sib(name: str):
+    """Load a sibling tool module by path (keeps the portal import-light and relocatable)."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(name, _TOOLS / f"{name}.py")
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m
+
+
+def _registry():
+    return _sib("mesh_telemetry").MeshRegistry.from_dir(_HEARTBEATS)
 
 
 def _capabilities() -> dict:
@@ -53,16 +68,39 @@ def _evidence(limit: int = 20) -> dict:
 
 
 def _compute() -> dict:
-    """The compute-mesh view: every substrate the compute plane can target (local -> supercomputer
-    -> volunteer grid -> wasm -> p2p -> blockchain), with trust and live availability. Real
-    availability comes from mesh telemetry; a representative snapshot is shown here."""
-    import importlib.util
-    spec = importlib.util.spec_from_file_location("compute_plane", Path(__file__).resolve().parent / "compute_plane.py")
-    cp = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(cp)
-    snapshot = {"local": 1, "k8s": 10, "hpc-slurm": 50, "wasm-edge": 20,
-                "p2p-mesh": 30, "volunteer-boinc": 200, "blockchain-rlc": 15}
-    return cp.backends_view(snapshot)
+    """The compute-mesh view: every substrate the plane can target, with trust and LIVE availability
+    summed from mesh telemetry (the HyperSwarm discovery/liveness substrate; stale nodes count 0)."""
+    cp = _sib("compute_plane")
+    reg = _registry()
+    view = cp.backends_view(reg.availability())
+    view["telemetry"] = reg.summary()
+    return view
+
+
+def _mesh() -> dict:
+    """Per-node liveness: which fog nodes are beating, their backend, capacity, and age
+    (the spec's HyperSwarm Mesh + Node Identity 'find candidate nodes')."""
+    reg = _registry()
+    return {"summary": reg.summary(), "nodes": reg.nodes()}
+
+
+def _placements() -> dict:
+    """The app suite on the mesh: run place() (the Control-Plane-Agent Decide) for each product's
+    declared workload against LIVE availability, so the dashboard shows where every product's work
+    would land right now."""
+    cp = _sib("compute_plane")
+    avail = _registry().availability()
+    try:
+        profiles = json.loads((_ROOT / "mesh" / "suite-workloads.json").read_text())["workloads"]
+    except (OSError, json.JSONDecodeError, KeyError):
+        profiles = []
+    out = []
+    for p in profiles:
+        d = cp.place(p.get("workload", {}), p.get("policy", {}), avail)
+        out.append({"product": p.get("product"), "id": p.get("id"),
+                    "backend": d.get("backend"), "placement": d.get("placement"),
+                    "backend_trust": d.get("backend_trust"), "reason": d.get("reason")})
+    return {"placements": out, "availability": avail}
 
 
 _CONSOLE = """<!doctype html><html lang=en><head><meta charset=utf-8>
@@ -85,8 +123,12 @@ h2{margin:0 0 10px;font-size:14px;letter-spacing:.04em;text-transform:uppercase;
 <section id=caps><h2>Capabilities</h2><div class=muted>loading…</div></section>
 <section id=life><h2>Lifecycle</h2><div class=muted>loading…</div></section>
 <section id=comp><h2>Compute mesh &mdash; scale out anywhere, governed</h2>
-<div class=muted>Develop local; the compute plane routes each workload by per-project policy + live mesh availability. Untrusted (volunteer/p2p/blockchain) backends never receive sensitive work.</div>
+<div class=muted>Develop local; the compute plane routes each workload by per-project policy + <b>live mesh telemetry</b>. Untrusted (volunteer/p2p/blockchain) backends never receive sensitive work.</div>
+<div id=meshsum class=muted style="margin-top:8px;color:#7ee2a8"></div>
 <div id=compbody class=muted style=margin-top:10px>loading…</div></section>
+<section id=suite><h2>App suite on the mesh &mdash; live placement</h2>
+<div class=muted>Where each product's workload lands right now, under its policy and current availability. <span class=gov>BLOCKED</span> = fail-closed, no compliant node live.</div>
+<div id=suitebody class=muted style=margin-top:10px>loading…</div></section>
 <section id=evi><h2>Sealed evidence (latest)</h2><div class=muted>loading…</div></section>
 </main>
 <script>
@@ -100,9 +142,15 @@ j('/api/lifecycle').then(d=>{document.getElementById('life').innerHTML='<h2>Life
  d.lifecycle.map(s=>`<div class=row><span><b>${esc(s.stage)}</b></span><span class=muted>${esc(s.note)}</span></div>`).join('')})
 j('/api/evidence').then(d=>{document.getElementById('evi').innerHTML='<h2>Sealed evidence (latest)</h2>'+
  (d.evidence.map(e=>`<div class=row><span class=muted>${esc(e.bundle)}</span><code>${esc(e.name)}</code></div>`).join('')||'<div class=muted>no evidence yet</div>')})
-j('/api/compute').then(d=>{document.getElementById('compbody').innerHTML=
+j('/api/compute').then(d=>{const t=d.telemetry||{};
+ document.getElementById('meshsum').innerHTML=`&#9679; <b>${esc(t.live_nodes??0)}</b>/${esc(t.total_nodes??0)} nodes live &middot; backends up: ${esc((t.backends_up||[]).join(', ')||'none')}`;
+ document.getElementById('compbody').innerHTML=
  d.backends.map(b=>`<div class=row><span><code>${esc(b.id)}</code> <span class=muted>${esc(b.kind)} &middot; elasticity ${esc(b.elasticity)}</span></span>`+
  `<span><span class="pill ${b.trust==='untrusted'?'exp':''}">${esc(b.trust)}</span> <span class=muted>avail ${esc(b.available)}</span></span></div>`).join('')})
+j('/api/placements').then(d=>{document.getElementById('suitebody').innerHTML=
+ (d.placements.map(p=>{const b=p.backend?`<code>${esc(p.backend)}</code>`:'<span style=color:#e28a8a>BLOCKED</span>';
+  const tr=p.backend_trust?` <span class="pill ${p.backend_trust==='untrusted'?'exp':''}">${esc(p.backend_trust)}</span>`:'';
+  return `<div class=row><span><b>${esc(p.product)}</b> <span class=muted>${esc(p.id)}</span></span><span>${b}${tr}</span></div>`}).join('')||'<div class=muted>no profiles</div>')})
 </script></body></html>"""
 
 
@@ -114,7 +162,8 @@ def route(path: str) -> tuple[int, str, str]:
     if path == "/healthz":
         return 200, "text/plain", "ok"
     api = {"/api/capabilities": _capabilities, "/api/lifecycle": _lifecycle,
-           "/api/evidence": _evidence, "/api/compute": _compute}
+           "/api/evidence": _evidence, "/api/compute": _compute,
+           "/api/mesh": _mesh, "/api/placements": _placements}
     if path in api:
         return 200, "application/json", json.dumps(api[path](), indent=2, sort_keys=True)
     return 404, "text/plain", "not found"

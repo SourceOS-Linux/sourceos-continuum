@@ -15,6 +15,9 @@ node_modules/
 # Promotion-gate runtime evidence (emitted at rollout, not committed; dir kept via .gitkeep)
 artifacts/gate-decisions/*.json
 
+# Live mesh telemetry heartbeats (emitted by nodes at runtime, not committed; dir kept via .gitkeep)
+artifacts/mesh-heartbeats/*.json
+
 # Porter control-plane build outputs (compiled locally, not committed)
 artifacts/porter-shim/shim
 artifacts/cloudshell-hardened-pack/culler/culler

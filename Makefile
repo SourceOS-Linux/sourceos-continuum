@@ -14,6 +14,16 @@ portal: ## developer portal: read-only web console over the governed surface (sc
 compute: ## compute plane: route one workload across the mesh under per-project policy + availability
 	python3 tools/compute_plane.py
 
+mesh-demo: ## seed a live demo mesh (heartbeats) so the portal shows live telemetry
+	@python3 tools/mesh_telemetry.py heartbeat artifacts/mesh-heartbeats k8s-a k8s 8 >/dev/null
+	@python3 tools/mesh_telemetry.py heartbeat artifacts/mesh-heartbeats slurm-login hpc-slurm 120 >/dev/null
+	@python3 tools/mesh_telemetry.py heartbeat artifacts/mesh-heartbeats edge-1 wasm-edge 20 >/dev/null
+	@python3 tools/mesh_telemetry.py heartbeat artifacts/mesh-heartbeats boinc-grid volunteer-boinc 400 >/dev/null
+	@python3 tools/mesh_telemetry.py view artifacts/mesh-heartbeats
+
+grant: ## demo the zero-trust attach flow: Attest -> Decide -> Grant -> verify-at-node
+	python3 tools/mcp_a2a_grant.py
+
 onboard: ## bring up a workstation: local sovereign forge + local cluster + sourceosctl
 	@echo "[continuum] onboard — scaffold: wires Gitea bring-up + kind/k3s + sourceos-devtools/sourceosctl"
 
