@@ -6,6 +6,9 @@
   "description": "Vercel and Heroku are the same move: detect the app from source, build it into a runnable image without a Dockerfile, deploy it, and give a preview environment per branch. This delivers that ergonomic sovereign and open, via Cloud Native Buildpacks / Paketo (`pack build`): source -> detect -> reproducible SBOM'd OCI image (a data sphere, SLSA-attestable) -> a workload the executor dispatches into a DevSpace -> a Signadot-style sandbox as the per-branch preview -> the fail-closed promotion gate as dev->prod. No Docker daemon, no hand-written Dockerfile; the build is reproducible + attestable, the runtime is our mesh (including sovereign GPU inference), and the data stays in residency-fenced data spheres.",
   "links": {
     "engine": "tools/buildpack.py",
+    "flow": "tools/deploy_flow.py",
+    "login": "tools/login.py",
+    "remote_terminal": "tools/devmode.py (attach_command — grant-bound PTY)",
     "executor": "tools/executor.py",
     "preview": "tools/devspace.py",
     "promotion": "tools/promotion_gate.py",

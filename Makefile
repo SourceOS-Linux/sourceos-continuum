@@ -45,6 +45,12 @@ lease: ## pull/lease scheduler demo: workers pull WUs, crash-stop re-lending, or
 sphere: ## data-sphere demo: immutable dm-verity sphere, construction-tenancy, intent x link x durability
 	cd tools && python3 data_sphere.py
 
+push: ## git-push deploy flow demo: build -> deploy -> per-branch preview
+	cd tools && python3 deploy_flow.py
+
+login: ## login/session demo: authenticate the front door (fail-closed)
+	cd tools && python3 login.py
+
 provision: ## provisioning demo: tenant broker + entitlement tier + BSS meter + /me
 	cd tools && python3 provisioning.py
 
