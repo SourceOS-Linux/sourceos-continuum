@@ -31,6 +31,9 @@ BACKENDS = {
     "p2p-mesh":       {"kind": "hyperswarm",    "trust": "untrusted", "elasticity": 8,  "gpu": False},
     "volunteer-boinc": {"kind": "volunteer",    "trust": "untrusted", "elasticity": 10, "gpu": False},
     "blockchain-rlc": {"kind": "compute-market", "trust": "untrusted", "elasticity": 8, "gpu": True},
+    # A vendor connector (Gemini/OpenAI/Claude Files API, or an MCP tool) is external/untrusted —
+    # sensitive data does not auto-route here without explicit policy.
+    "connector":      {"kind": "connector",     "trust": "untrusted", "elasticity": 9,  "gpu": True},
 }
 
 

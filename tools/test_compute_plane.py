@@ -81,6 +81,16 @@ def test_receipt_seal_is_deterministic_and_covers_the_decision():
     assert reseal == d["receipt_digest"]
 
 
+def test_connector_backend_is_external_barred_for_sensitive_but_open_to_normal():
+    # a vendor connector is untrusted: sensitive work refuses it (blocks); normal work may use it.
+    blocked = cp.place({"sensitivity": "sensitive", "scalable": True},
+                       {"allowed_backends": ["connector"]}, {"connector": 100})
+    assert blocked["backend"] is None
+    ok = cp.place({"sensitivity": "normal", "scalable": True},
+                  {"allowed_backends": ["connector"]}, {"connector": 100})
+    assert ok["backend"] == "connector"
+
+
 def test_backends_view_exposes_the_whole_mesh_with_availability():
     view = cp.backends_view({"volunteer-boinc": 200})
     ids = {b["id"] for b in view["backends"]}

@@ -54,6 +54,12 @@ def test_readonly_subcommands_exit_clean():
     assert ctl.cmd_commons(None) == 0
 
 
+def test_place_subcommand_runs_without_run_only_flags():
+    # `place` omits --cost/--inception/--parallelism; cmd_run must not AttributeError on them.
+    args = ctl.build_parser().parse_args(["place", "--gpu", "--sensitivity", "normal"])
+    assert args.func(args) == 0
+
+
 if __name__ == "__main__":
     import sys
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]

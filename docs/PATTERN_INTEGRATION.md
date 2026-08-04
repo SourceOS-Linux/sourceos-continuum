@@ -30,8 +30,8 @@ graded. `✅` shipped · `◑` partial · `○` gap (named next step).
 |---|---|---|
 | **Placement across substrates** (LoadLeveler/SLURM-style) | `compute_plane.place` over local/k8s/hpc-slurm/wasm/p2p/volunteer/blockchain | ✅ |
 | **Batch job** | `Job` (k8s, real) / `sbatch` (slurm) | ✅ k8s · ○ slurm submit |
-| **Parallel / MPI job (N ranks)** — the POE pattern | Indexed `Job` (k8s) / `--ntasks` MPI + `--array` (slurm) | ○ **next unit** |
-| **Real SLURM submission** | today: placement + descriptor only (`DescriptorAdapter`); real `sbatch`/`srun`/MPI adapter | ○ **next unit** |
+| **Parallel / MPI job (N ranks)** — the POE pattern | `executor.K8sAdapter` emits an **Indexed Job** (completions/parallelism=N, `JOB_COMPLETION_INDEX` = rank); `sourceosctl run --parallelism N` | ✅ |
+| **Real SLURM submission** | `executor.SlurmAdapter` emits a real `sbatch` script (`--ntasks` + `srun` MPI ranks), submits via `ssh <SOURCEOS_SLURM_LOGIN> sbatch` | ✅ |
 | **Edge/Fog K3s ↔ Cloud Twin sync** over intermittent links (LAN/WAN/sneakernet) | mesh telemetry + hyperswarm scale-up capability; real twin-sync + S3 export | ◑ |
 
 ## Reach, governance, evidence
@@ -40,13 +40,18 @@ graded. `✅` shipped · `◑` partial · `○` gap (named next step).
 |---|---|---|
 | **SSH gateway to a device fleet** (ShellHub: Server + Agents on computer/device/container/server) | cloud-shell fog: Edge Gateway + HyperSwarm discovery + Grant-bound attach; a ShellHub-style agent per node | ◑ |
 | **7-layer PaaS** (UX→Object Store→Derived→Vendor→Retrieval→Policy→Tool-runtime) | knowledge commons (canonical + derived + provenance), MCP surface (tool runtime), promotion gate (policy) | ◑ |
-| **Governed connector calls** (Gemini/OpenAI/Claude Files APIs — materialize→handle→dispatch→result) | the SAME governed dispatch as a compute job: a `connector` effect through grant + executor | ○ **next unit** |
+| **Governed connector calls** (Gemini/OpenAI/Claude Files APIs — materialize→handle→dispatch→result) | `executor.ConnectorAdapter` + a `connector` backend (external/untrusted): a connector call is the SAME Grant-gated dispatch as a compute job | ✅ |
 | **Append-only audit ledger** (every diagram) | sealed receipts (`artifacts/`), MCP-A2A ledger conformance | ✅ |
 
 ## What this establishes
 
 The compute mesh + grants + admission is the **governance & scale-out substrate**; the DevSpace/
-Sandbox/StatefulSet plane is the **environment & stateful substrate**. The two open frontiers that
-would make the HPC/connector story first-class are one unit: **parallel/MPI jobs (Indexed Job +
-real SLURM) and connector-call-as-dispatch** — unifying "run a job" and "call a connector" under one
-`Grant`-gated executor. That is the codification the IBM Parallel Environment pattern is asking for.
+Sandbox/StatefulSet plane is the **environment & stateful substrate**; and one `Grant`-gated executor
+now dispatches **batch, parallel/MPI (Indexed Job / SLURM `sbatch`+`srun`), stateful, and connector**
+work alike — "run a job" and "call a connector" are the same governed dispatch. That codifies the
+IBM Parallel Environment / HPC Toolkit pattern on the mesh.
+
+**Remaining frontier** (the next research-driven unit): the **volunteer-compute / global-mesh
+substrate** — how a Folding@home-scale volunteer grid (untrusted, churny, 400k-node) plugs in
+governed, per the dual-orchestration design and the volunteer-computing corpus. See the incoming
+synthesis.
