@@ -55,8 +55,33 @@ def test_subjects_have_isolated_budgets():
 
 
 def test_default_quota_applies_to_unknown_subject():
-    ac = adm.AdmissionController()
+    ac = adm.AdmissionController(tiers={"spiffe://who/dis": "__none__"})  # unknown tier -> DEFAULT_QUOTA
     assert ac.quota_for("spiffe://who/dis") == adm.DEFAULT_QUOTA
+
+
+def test_tier_sets_quota_and_backend_entitlement():
+    ac = adm.AdmissionController(tiers={"free-user": "free", "ent-user": "enterprise"})
+    assert ac.quota_for("free-user")["gpu_max"] == 0
+    assert ac.allowed_backends("free-user") == ["local", "wasm-edge"]
+    assert ac.allowed_backends("ent-user") is None            # enterprise = all backends
+    assert ac.quota_for("ent-user")["max_concurrent"] == 16
+
+
+def test_default_tier_is_pro():
+    ac = adm.AdmissionController()
+    assert ac.tier("anyone") == "pro" and ac.quota_for("anyone")["gpu_max"] == 2
+
+
+def test_explicit_quota_overrides_tier():
+    ac = adm.AdmissionController(quotas={"u": {"gpu_max": 5}}, tiers={"u": "free"})
+    assert ac.quota_for("u")["gpu_max"] == 5           # explicit override wins
+    assert ac.quota_for("u")["max_concurrent"] == 1    # ...but the rest is the free tier
+
+
+def test_free_tier_denies_gpu_work():
+    ac = adm.AdmissionController(tiers={"u": "free"})
+    r = ac.admit("u", {"needs_gpu": True})
+    assert not r["admitted"] and "gpu_max" in r["exceeded"]
 
 
 def test_ledger_persists_consumption_across_controllers():

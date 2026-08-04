@@ -45,6 +45,9 @@ lease: ## pull/lease scheduler demo: workers pull WUs, crash-stop re-lending, or
 sphere: ## data-sphere demo: immutable dm-verity sphere, construction-tenancy, intent x link x durability
 	cd tools && python3 data_sphere.py
 
+availability: ## report the estate's availability-maturity grades (the Zero-Downtime legend)
+	cd tools && python3 availability.py
+
 onboard: ## bring up a workstation: local sovereign forge + local cluster + sourceosctl
 	@echo "[continuum] onboard — scaffold: wires Gitea bring-up + kind/k3s + sourceos-devtools/sourceosctl"
 
