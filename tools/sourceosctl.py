@@ -25,6 +25,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import admission as adm  # noqa: E402
 import compute_plane as cp  # noqa: E402
 import executor as ex  # noqa: E402
 import mcp_a2a_grant as g  # noqa: E402
@@ -32,6 +33,7 @@ import mesh_telemetry as mt  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 HEARTBEATS = ROOT / "artifacts" / "mesh-heartbeats"
+LEDGER = ROOT / "artifacts" / "admission-usage.json"
 _DEV_KEY = "dev-only-key-not-for-production"
 
 
@@ -48,7 +50,7 @@ def _sha(s: str) -> str:
 
 
 def run_workload(*, name, command, effect, sensitivity, scalable, gpu, image, subject,
-                 heartbeats_dir, key, apply=False, dry=False) -> dict:
+                 heartbeats_dir, key, apply=False, dry=False, admission=None, cost=1.0) -> dict:
     """Core of `run` — testable without the CLI. Returns the full spine trace (or a placement)."""
     reg = mt.MeshRegistry.from_dir(heartbeats_dir)
     workload = {"name": name, "command": command, "effect": effect, "sensitivity": sensitivity,
@@ -63,17 +65,23 @@ def run_workload(*, name, command, effect, sensitivity, scalable, gpu, image, su
     attestation = g.attestation_bundle(spiffe_id=subject, aum_digest=aum, tpm_valid=True, cosign_valid=True)
     return ex.run_spine(workload, policy, registry=reg, binding=binding, capability=capability,
                         attestation=attestation, constraints={"ops_allow": ["exec.run"]},
-                        signer=g.hmac_signer(key), verifier=g.hmac_verifier(key), apply=apply)
+                        signer=g.hmac_signer(key), verifier=g.hmac_verifier(key), apply=apply,
+                        admission=admission, admission_key=subject, cost=cost)
 
 
 def cmd_run(args) -> int:
     if _dev_mode():
         print("!  DEV MODE: no SOURCEOS_SIGNING_KEY set — synthesizing a dev attestation + HMAC key. "
               "Not for production.", file=sys.stderr)
+    admission = None if args.dry else adm.AdmissionController(ledger_path=LEDGER)
     out = run_workload(name=args.name, command=args.command, effect=args.effect,
                        sensitivity=args.sensitivity, scalable=not args.no_scale, gpu=args.gpu,
                        image=args.image, subject=args.subject, heartbeats_dir=HEARTBEATS,
-                       key=_key(), apply=args.apply, dry=args.dry)
+                       key=_key(), apply=args.apply, dry=args.dry, admission=admission, cost=args.cost)
+    if out["status"] == "denied":
+        a = out["admission"]
+        print(f"DENIED (fail-closed): {a['reason']}  [usage {a['usage']} vs quota {a['quota']}]")
+        return 4
     if out["status"] == "blocked":
         print(f"BLOCKED (fail-closed): {out['decision']['reason']}")
         return 3
@@ -85,6 +93,15 @@ def cmd_run(args) -> int:
     print(f"ran on: {out['backend']}  ({d['backend_trust']})  via grant {out['grant_id']}")
     print(f"dispatch: {e['dispatch']['kind']} (applied={e['dispatch'].get('applied')})")
     print(f"sealed receipt: {e['receipt']['receipt_digest']}")
+    if out.get("admission"):
+        print(f"quota usage: {out['admission']}")
+    return 0
+
+
+def cmd_quota(args) -> int:
+    ac = adm.AdmissionController(ledger_path=LEDGER)
+    print(f"quota for {args.subject}: {ac.quota_for(args.subject)}")
+    print(f"usage:     {ac.usage(args.subject)}")
     return 0
 
 
@@ -125,6 +142,7 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--gpu", action="store_true", help="workload needs a GPU")
     r.add_argument("--no-scale", action="store_true", help="keep it small (non-scalable)")
     r.add_argument("--subject", default="spiffe://sourceos/agent/dev", help="the requesting subject SPIFFE id")
+    r.add_argument("--cost", type=float, default=1.0, help="cost units to charge against the subject's budget")
     r.add_argument("--apply", action="store_true", help="actually execute (local subprocess / kubectl apply)")
     r.add_argument("--dry", action="store_true", help="only decide placement; dispatch nothing")
     r.set_defaults(func=cmd_run)
@@ -144,6 +162,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     c = sub.add_parser("commons", help="the reproducible knowledge commons")
     c.set_defaults(func=cmd_commons)
+
+    q = sub.add_parser("quota", help="show a subject's quota + current usage")
+    q.add_argument("--subject", default="spiffe://sourceos/agent/dev")
+    q.set_defaults(func=cmd_quota)
     return p
 
 
