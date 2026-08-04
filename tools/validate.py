@@ -41,6 +41,7 @@ REQUIRED = [
     "tools/lease_scheduler.py",
     "tools/devmode.py",
     "tools/data_sphere.py",
+    "tools/availability.py",
 ]
 CAPD_KEYS = ("capability_id", "kind", "status", "links", "composes_with", "policy")
 # Every CapD in capd/ must carry the core keys and parse — not just the flagship control-plane one.

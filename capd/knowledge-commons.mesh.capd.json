@@ -19,6 +19,7 @@
     "scales_up_to": "caps.infra.cluster-scaleup.hyperswarm@0.1.0"
   },
   "policy": {
+    "availability": "almost-zd",
     "content_addressed": true,
     "citable": true,
     "reproducibility_gate": true,

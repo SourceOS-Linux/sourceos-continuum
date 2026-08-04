@@ -19,17 +19,38 @@ from pathlib import Path
 
 DEFAULT_QUOTA = {"max_concurrent": 4, "gpu_max": 2, "cost_budget": 100.0}
 
+# Account tiers (BlueMix entitlement, done sovereign + light): a tier sets the quota AND which
+# backends a subject may reach. `allowed_backends: None` means all.
+TIERS = {
+    "free":       {"max_concurrent": 1,  "gpu_max": 0, "cost_budget": 5.0,
+                   "allowed_backends": ["local", "wasm-edge"]},
+    "pro":        {"max_concurrent": 4,  "gpu_max": 2, "cost_budget": 100.0,
+                   "allowed_backends": ["local", "wasm-edge", "k8s", "hpc-slurm", "p2p-mesh", "volunteer-boinc"]},
+    "enterprise": {"max_concurrent": 16, "gpu_max": 8, "cost_budget": 5000.0,
+                   "allowed_backends": None},
+}
+
 
 class AdmissionController:
-    """Per-subject (or per-project) quotas + a live consumption ledger.
+    """Per-subject (or per-project) quotas + account tiers + a live consumption ledger.
 
     With a `ledger_path`, consumption persists across processes (so a CLI enforces a real running
-    budget, not a fresh one each invocation)."""
+    budget, not a fresh one each invocation). A `tiers` map (subject -> tier name) applies the tier's
+    quota + backend entitlement, which explicit `quotas` may still override."""
 
-    def __init__(self, quotas: dict[str, dict] | None = None, ledger_path=None):
+    def __init__(self, quotas: dict[str, dict] | None = None, ledger_path=None,
+                 tiers: dict[str, str] | None = None):
         self._quotas = quotas or {}
+        self._tiers = tiers or {}
         self._ledger_path = Path(ledger_path) if ledger_path else None
         self._usage: dict[str, dict] = self._load()
+
+    def tier(self, key: str) -> str:
+        return self._tiers.get(key, "pro")
+
+    def allowed_backends(self, key: str) -> list | None:
+        """The tier's backend entitlement — feed into compute_plane.place() policy. None = all."""
+        return TIERS.get(self.tier(key), {}).get("allowed_backends")
 
     def _load(self) -> dict:
         if self._ledger_path and self._ledger_path.exists():
@@ -45,7 +66,8 @@ class AdmissionController:
             self._ledger_path.write_text(json.dumps(self._usage, sort_keys=True))
 
     def quota_for(self, key: str) -> dict:
-        return {**DEFAULT_QUOTA, **self._quotas.get(key, {})}
+        tier_q = {k: v for k, v in TIERS.get(self.tier(key), {}).items() if k != "allowed_backends"}
+        return {**DEFAULT_QUOTA, **tier_q, **self._quotas.get(key, {})}  # tier, then explicit override
 
     def usage(self, key: str) -> dict:
         return self._usage.setdefault(key, {"concurrent": 0, "gpu": 0, "cost": 0.0})
