@@ -146,13 +146,20 @@ def execute(workload: dict, decision: dict, grant: dict, *, session_id: str, ver
 
 
 def run_spine(workload: dict, policy: dict, *, registry, binding: dict, capability: dict,
-              attestation: dict, constraints: dict, signer, verifier, apply: bool = False) -> dict:
-    """The one call that runs a workload governed across the mesh: place -> grant -> verify -> execute.
+              attestation: dict, constraints: dict, signer, verifier, apply: bool = False,
+              admission=None, admission_key: str | None = None, cost: float = 1.0) -> dict:
+    """The one call that runs a workload governed across the mesh: admit -> place -> grant -> verify
+    -> execute -> charge.
 
-    Returns the full trace. If the plane blocks placement (fail-closed), no Grant is issued and
-    nothing is dispatched.
+    Returns the full trace. Fail-closed at every stage: over quota -> denied (no Grant minted); the
+    plane blocks placement -> blocked; neither issues a Grant nor dispatches anything.
     """
     import compute_plane as cp
+    akey = admission_key or binding["spiffe_id"]
+    if admission is not None:
+        adm = admission.admit(akey, workload, cost=cost)
+        if not adm["admitted"]:
+            return {"status": "denied", "admission": adm}
     decision = cp.place(workload, policy, registry.availability())
     if not decision.get("backend"):
         return {"status": "blocked", "decision": decision}
@@ -160,8 +167,11 @@ def run_spine(workload: dict, policy: dict, *, registry, binding: dict, capabili
                                   attestation=attestation, constraints=constraints, signer=signer)
     execution = execute(workload, decision, grant, session_id=binding["session_id"],
                         verifier=verifier, apply=apply)
-    return {"status": "ran", "backend": decision["backend"], "decision": decision,
-            "grant_id": grant["grant_id"], "execution": execution}
+    result = {"status": "ran", "backend": decision["backend"], "decision": decision,
+              "grant_id": grant["grant_id"], "execution": execution}
+    if admission is not None:
+        result["admission"] = admission.charge(akey, workload, cost=cost)
+    return result
 
 
 if __name__ == "__main__":

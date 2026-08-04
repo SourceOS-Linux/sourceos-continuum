@@ -6,6 +6,7 @@
   "description": "A user develops on a low-mem box and the same workload scales out, seamlessly, over whatever the mesh offers: a k8s service, an HPC/SLURM supercomputer, WASM at the edge, a p2p/hyperswarm mesh, volunteer compute (BOINC / Folding@home / open-HEP-style), or an RLC-style blockchain compute market. The substrate is chosen by the placement broker from per-project/per-account policy and live mesh availability, scaling out where it can and where volunteer compute is offered. Governed and fail-closed: sensitive workloads never land on an untrusted (volunteer/p2p/blockchain) backend, every placement is sealed, and with no allowed+available backend it falls back to local or blocks rather than shipping work somewhere the policy forbids. Configured in the portal dashboard.",
   "links": {
     "broker": "tools/compute_plane.py",
+    "admission": "tools/admission.py",
     "executor": "tools/executor.py",
     "cli": "tools/sourceosctl.py",
     "telemetry": "tools/mesh_telemetry.py",
