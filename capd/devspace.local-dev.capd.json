@@ -6,6 +6,7 @@
   "description": "Nocalhost-style inner-loop over the continuum: an isolated per-user namespace (DevSpace), Signadot-style header-routed sandboxes that share a baseline, and the agent-machine as a StatefulSet with a per-replica TopoLVM inception mount. Consumes the control plane; surfaced to humans via the portal and to agents via the MCP ops surface (one governed source, two views).",
   "links": {
     "engine": "tools/devspace.py",
+    "devmode": "tools/devmode.py",
     "portal": "tools/portal_server.py",
     "agent_surface": "tools/mcp_ops_server.py",
     "inception_storage": "deploy/topolvm/ (TopoLVM StorageClass + runbook)",
