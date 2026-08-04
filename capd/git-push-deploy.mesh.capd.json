@@ -1,0 +1,30 @@
+{
+  "capability_id": "caps.dev.git-push-deploy@0.1.0",
+  "kind": "dev.build-deploy",
+  "status": "experimental",
+  "name": "Git-push deploy — the Vercel/Heroku ergonomic, sovereign (Cloud Native Buildpacks)",
+  "description": "Vercel and Heroku are the same move: detect the app from source, build it into a runnable image without a Dockerfile, deploy it, and give a preview environment per branch. This delivers that ergonomic sovereign and open, via Cloud Native Buildpacks / Paketo (`pack build`): source -> detect -> reproducible SBOM'd OCI image (a data sphere, SLSA-attestable) -> a workload the executor dispatches into a DevSpace -> a Signadot-style sandbox as the per-branch preview -> the fail-closed promotion gate as dev->prod. No Docker daemon, no hand-written Dockerfile; the build is reproducible + attestable, the runtime is our mesh (including sovereign GPU inference), and the data stays in residency-fenced data spheres.",
+  "links": {
+    "engine": "tools/buildpack.py",
+    "executor": "tools/executor.py",
+    "preview": "tools/devspace.py",
+    "promotion": "tools/promotion_gate.py",
+    "artifact": "tools/data_sphere.py",
+    "spec_witness": "docs/BUILD_DEPLOY.md",
+    "reference_pattern": "Vercel + Heroku (git-push-to-deploy, buildpack auto-detect, per-branch preview, instant rollback) via open Cloud Native Buildpacks / Paketo — met sovereign: reproducible+attestable build, our runtime, our data"
+  },
+  "composes_with": {
+    "inner_loop": "caps.dev.devspace-inner-loop@0.1.0",
+    "compute_plane": "caps.compute.mesh-plane@0.1.0",
+    "control_plane": "caps.infra.paas.continuum-local@0.1.0",
+    "scales_up_to": "caps.infra.cluster-scaleup.hyperswarm@0.1.0"
+  },
+  "policy": {
+    "availability": "needs-work",
+    "no_dockerfile": true,
+    "reproducible_image": true,
+    "per_branch_preview": true,
+    "promotion_gated": true,
+    "evidence_emitting": true
+  }
+}
