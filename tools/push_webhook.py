@@ -32,9 +32,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import deploy_flow as df
+import release_ledger as rl
 
 _ROOT = Path(__file__).resolve().parent.parent
 _RECEIPTS = _ROOT / "artifacts" / "webhook-receipts"
+_RELEASES = _ROOT / "artifacts" / "releases"
 _ZERO_SHA = "0" * 40  # git's null object — a branch delete pushes "after": 0000...
 
 
@@ -102,13 +104,15 @@ def _finish(decision: dict, receipts_dir) -> dict:
 
 
 def handle_push(*, secret: str, sig_header: str, raw_body: bytes, project: dict,
-                resolve_files=None, receipts_dir=None) -> dict:
+                resolve_files=None, receipts_dir=None, ledger_dir=None) -> dict:
     """The governed decision for one webhook delivery. Fail-closed: verify the signature FIRST; an
     unsigned/mis-signed push returns `rejected` and NO build is started.
 
     project: {tenant, user, app?, sensitivity?}  — resolved per-repo by the caller.
     resolve_files(repo, ref, after) -> [paths]   — the full source manifest at the pushed commit
                                                     (production: a checkout of `after`). Optional.
+    ledger_dir                                    — if given, a successful deploy is recorded as a
+                                                    release so it can be rolled back to. Optional.
     Returns a sealed decision; status in {rejected, ignored, deployed, build-failed}.
     """
     decision = {"surface": "sourceos-continuum.push_webhook.v1",
@@ -155,9 +159,16 @@ def handle_push(*, secret: str, sig_header: str, raw_body: bytes, project: dict,
     result = df.on_push(tenant=project["tenant"], user=project["user"], repo=ev["repo"],
                         branch=ev["branch"], source_files=source_files,
                         sensitivity=project.get("sensitivity", "normal"), app=project.get("app"))
-    return _finish({**decision, "status": result["status"],
-                    "accepted": result["status"] != "build-failed",
-                    "files_source": files_source, "deploy": result}, receipts_dir)
+    out = {**decision, "status": result["status"],
+           "accepted": result["status"] != "build-failed",
+           "files_source": files_source, "deploy": result}
+    # a successful deploy becomes a rollback-able release (fail-closed deploys are not releases).
+    if ledger_dir is not None and result.get("status") == "deployed":
+        rel = rl.record_deploy(ledger_dir, tenant=project["tenant"],
+                               app=project.get("app") or "default", deploy_result=result)
+        if rel is not None:
+            out["release_id"] = rel["release_id"]
+    return _finish(out, receipts_dir)
 
 
 # --- thin HTTP wrapper (stdlib only) -------------------------------------------------------------
@@ -197,7 +208,7 @@ def serve(port: int = 8099) -> None:
                    or self.headers.get("X-SourceOS-Signature") or "")
             proj = project_for_path(self.path)
             decision = handle_push(secret=proj["secret"], sig_header=sig, raw_body=raw,
-                                   project=proj, receipts_dir=_RECEIPTS)
+                                   project=proj, receipts_dir=_RECEIPTS, ledger_dir=_RELEASES)
             body = json.dumps(decision, indent=2, sort_keys=True).encode("utf-8")
             self.send_response(_STATUS_CODE.get(decision["status"], 200))
             self.send_header("Content-Type", "application/json")
