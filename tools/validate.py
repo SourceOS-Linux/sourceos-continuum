@@ -29,6 +29,8 @@ REQUIRED = [
     "tools/mcp_a2a_grant.py",
     "tools/commons.py",
     "tools/mcp_ops_server.py",
+    "tools/executor.py",
+    "tools/sourceosctl.py",
 ]
 CAPD_KEYS = ("capability_id", "kind", "status", "links", "composes_with", "policy")
 # Every CapD in capd/ must carry the core keys and parse — not just the flagship control-plane one.
