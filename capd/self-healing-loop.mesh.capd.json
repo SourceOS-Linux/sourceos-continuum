@@ -1,0 +1,30 @@
+{
+  "capability_id": "caps.compute.self-healing-loop@0.1.0",
+  "kind": "compute.autonomous-control-loop",
+  "status": "experimental",
+  "name": "Governed autonomous control loop — detect AND heal",
+  "description": "Closes the loop from detection to remediation, under governance. It senses conditions and, for each one it may act on, runs the SAME governed spine a developer runs (admission -> place -> grant -> verify -> execute), sealing every action. Safe to run unattended: it never acts without a valid Grant or over quota; it decides a persistent condition ONCE per cooldown (no remediation storms); and one bad condition (block, deny, or raise) is recorded and skipped rather than killing the loop. This is the difference between a platform that pages a human and one that self-heals.",
+  "links": {
+    "engine": "tools/control_loop.py",
+    "spine": "tools/executor.py",
+    "placement": "tools/compute_plane.py",
+    "admission": "tools/admission.py",
+    "grant_authority": "tools/mcp_a2a_grant.py",
+    "ledger": "artifacts/gate-decisions + mcp-receipts (sealed)",
+    "reference_pattern": "escalation-suppression / decide-a-standing-condition-once-per-cooldown; detect != control-loop"
+  },
+  "composes_with": {
+    "compute_plane": "caps.compute.mesh-plane@0.1.0",
+    "fog": "caps.compute.cloudshell-fog@0.1.0",
+    "control_plane": "caps.infra.paas.continuum-local@0.1.0",
+    "scales_up_to": "caps.infra.cluster-scaleup.hyperswarm@0.1.0"
+  },
+  "policy": {
+    "governed_remediation": true,
+    "never_acts_ungoverned": true,
+    "decide_once_per_cooldown": true,
+    "fail_closed": true,
+    "evidence_emitting": true,
+    "one_bad_condition_never_kills_the_loop": true
+  }
+}
