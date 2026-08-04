@@ -32,8 +32,11 @@ mesh_telemetry           compute_plane        mcp_a2a_grant           mcp_a2a_gr
    attestation, effect. No valid Grant → **`DispatchRefused`**, nothing runs.
 5. **Dispatch** — a per-backend adapter runs it:
    - **local** — a real subprocess (`--apply`).
-   - **k8s** — a real, Grant-labelled `batch/v1` Job manifest (applied via `kubectl` when a cluster
-     is reachable, else emitted).
+   - **k8s** — a real, Grant-labelled `batch/v1` Job manifest, `kubectl create`-d (not `apply` — a
+     Job is one-shot/immutable and `apply` rejects `generateName`) into an **explicit** target
+     context. Applying requires `SOURCEOS_KUBE_CONTEXT` — the executor refuses to dispatch to
+     whatever kube-context happens to be current (which could be prod). Validated client-side with
+     `kubectl create --dry-run=client`.
    - **hpc-slurm · wasm-edge · p2p-mesh · volunteer-boinc · blockchain-rlc** — the substrate-specific
      descriptor to hand that scheduler over a Grant-bound channel.
 6. **Receipt** — every dispatch is hash-sealed.
