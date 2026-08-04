@@ -18,9 +18,27 @@ warn() { printf '\033[1;33m! %s\033[0m\n' "$*"; }
 die()  { printf '\033[1;31m✗ %s\033[0m\n' "$*" >&2; exit 1; }
 
 # ── preflight ────────────────────────────────────────────────────────────────
+# HOST_HTTP/HOST_HTTPS are the ports the ingress is published on. They are 80/443
+# unless the runtime cannot bind privileged ports, in which case they move up.
+HOST_HTTP=80
+HOST_HTTPS=443
+
 need_runtime() {
   if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then return 0; fi
-  if command -v podman >/dev/null 2>&1; then export KIND_EXPERIMENTAL_PROVIDER=podman; return 0; fi
+  if command -v podman >/dev/null 2>&1; then
+    export KIND_EXPERIMENTAL_PROVIDER=podman
+    # ROOTLESS podman cannot bind ports below net.ipv4.ip_unprivileged_port_start
+    # (1024 by default), so a cluster mapping 80/443 dies at create time with
+    # "rootlessport cannot expose privileged port 80" -- before any workload exists.
+    # Rather than ask the operator to edit sysctl for a dev loop, publish the ingress
+    # higher up and tell them the URL.
+    if [ "$(podman info --format '{{.Host.Security.Rootless}}' 2>/dev/null)" = "true" ]; then
+      HOST_HTTP=8080
+      HOST_HTTPS=8443
+      warn "rootless podman: publishing ingress on ${HOST_HTTP}/${HOST_HTTPS} (cannot bind 80/443)"
+    fi
+    return 0
+  fi
   die "no container runtime — install Docker Desktop or Podman (kind needs one)"
 }
 
@@ -43,8 +61,12 @@ cluster_up() {
   if kind get clusters 2>/dev/null | grep -qx "$CLUSTER"; then
     log "kind cluster '$CLUSTER' already exists"
   else
-    log "creating kind cluster '$CLUSTER'"
-    kind create cluster --config "$ROOT/local/kind-cluster.yaml"
+    log "creating kind cluster '$CLUSTER' (ingress on ${HOST_HTTP}/${HOST_HTTPS})"
+    # The committed config carries the canonical shape; the host ports are substituted
+    # so the same file serves docker (80/443) and rootless podman (8080/8443).
+    sed -e "s/hostPort: 80$/hostPort: ${HOST_HTTP}/" \
+        -e "s/hostPort: 443$/hostPort: ${HOST_HTTPS}/" \
+        "$ROOT/local/kind-cluster.yaml" | kind create cluster --config -
   fi
   kubectl cluster-info --context "kind-$CLUSTER" >/dev/null
 }
@@ -118,7 +140,7 @@ shim_up() {
       -p='[{"op":"add","path":"/spec/template/spec/containers/0/imagePullPolicy","value":"Never"}]' >/dev/null 2>&1 || true
   fi
   # Local dev posture for the shim.
-  kubectl -n "$NS_PORTER" set env deploy/porter-shim SHIM_ALLOW_UNSIGNED=true SHIM_SHELL_BASE=http://localhost >/dev/null 2>&1 || true
+  kubectl -n "$NS_PORTER" set env deploy/porter-shim SHIM_ALLOW_UNSIGNED=true SHIM_SHELL_BASE=http://localhost:${HOST_HTTP} >/dev/null 2>&1 || true
   kubectl -n "$NS_PORTER" rollout status deploy/porter-shim --timeout=120s || warn "porter-shim still settling"
 }
 
