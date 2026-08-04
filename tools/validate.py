@@ -27,6 +27,7 @@ REQUIRED = [
     "capd/data-spheres.mesh.capd.json",
     "capd/sovereign-inference.mesh.capd.json",
     "capd/git-push-deploy.mesh.capd.json",
+    "capd/provisioning-plane.mesh.capd.json",
     "tools/promotion_gate.py",
     "tools/portal_server.py",
     "tools/compute_plane.py",
@@ -46,6 +47,7 @@ REQUIRED = [
     "tools/availability.py",
     "tools/inference.py",
     "tools/buildpack.py",
+    "tools/provisioning.py",
 ]
 CAPD_KEYS = ("capability_id", "kind", "status", "links", "composes_with", "policy")
 # Every CapD in capd/ must carry the core keys and parse — not just the flagship control-plane one.
@@ -59,6 +61,7 @@ EXTRA_CAPD_IDS = {
     "capd/data-spheres.mesh.capd.json": "caps.data.spheres",
     "capd/sovereign-inference.mesh.capd.json": "caps.inference.sovereign",
     "capd/git-push-deploy.mesh.capd.json": "caps.dev.git-push-deploy",
+    "capd/provisioning-plane.mesh.capd.json": "caps.dev.provisioning",
 }
 
 errors: list[str] = []

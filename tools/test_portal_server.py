@@ -59,6 +59,11 @@ def test_console_is_installable_and_shows_sovereign_inference():
     assert "rel=manifest" in html and "Sovereign inference" in html and "epbadge" in html
 
 
+def test_me_profile_endpoint_returns_tier_namespace_and_endpoint():
+    d = json.loads(ps.route("/api/me")[2])
+    assert d.get("tier") == "pro" and d.get("endpoint") == "twin" and "namespace" in d and "quota" in d
+
+
 def test_inference_api_is_sovereign_first_and_fail_closed_without_endpoints():
     with tempfile.TemporaryDirectory() as td:
         old, ps._HEARTBEATS = ps._HEARTBEATS, pathlib.Path(td)  # no live GPU backend -> no sovereign endpoint

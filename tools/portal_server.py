@@ -140,6 +140,17 @@ def _inference() -> dict:
                        for m in models]}
 
 
+def _me() -> dict:
+    """The tenant profile (Watson '/me'-style): tier, namespace, quota, live usage, endpoint."""
+    pv = _sib("provisioning")
+    adm = _sib("admission")
+    ac = adm.AdmissionController(ledger_path=_ROOT / "artifacts" / "admission-usage.json",
+                                tiers={"you": "pro"})
+    b = pv.ServiceBroker(admission=ac)
+    b.provision(tenant="you", user="dev", tier="pro", app="default")
+    return b.me("you") or {}
+
+
 _MANIFEST = json.dumps({
     "name": "SourceOS Continuum", "short_name": "Continuum", "start_url": "/", "scope": "/",
     "display": "standalone", "background_color": "#0b0d12", "theme_color": "#0b0d12",
@@ -245,7 +256,7 @@ def route(path: str) -> tuple[int, str, str]:
     api = {"/api/capabilities": _capabilities, "/api/lifecycle": _lifecycle,
            "/api/evidence": _evidence, "/api/compute": _compute,
            "/api/mesh": _mesh, "/api/placements": _placements, "/api/commons": _commons,
-           "/api/inference": _inference}
+           "/api/inference": _inference, "/api/me": _me}
     if path in api:
         return 200, "application/json", json.dumps(api[path](), indent=2, sort_keys=True)
     return 404, "text/plain", "not found"

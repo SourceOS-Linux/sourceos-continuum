@@ -1,0 +1,30 @@
+{
+  "capability_id": "caps.dev.provisioning@0.1.0",
+  "kind": "dev.control-plane",
+  "status": "experimental",
+  "name": "Provisioning plane — the server control plane (broker + entitlement + BSS + /me)",
+  "description": "The server/control-plane seam the Nocalhost and BlueMix diagrams have and we lacked: log in -> provision my tenant -> get my namespace + quota + endpoint -> see my usage -> be billed. Nocalhost calls it Web+API+Dep; BlueMix calls it SSO+Entitlement+Broker+Token+BSS. This unifies the governed core, composing devspace (isolated tenant namespace) + admission tiers (entitlement: quota + backend allowlist) + grants — as an Open-Service-Broker-shaped surface: provision, bind (namespace + endpoint twin/box + session), deprovision, meter (BSS billing from the usage ledger), and /me (tenant profile). Unlike BlueMix's proprietary Cloud-Foundry stack (Diego/Garden/BOSH, hosted lock-in), this is k8s-native, open, and governed (sealed provisioning receipts).",
+  "links": {
+    "engine": "tools/provisioning.py",
+    "devspace": "tools/devspace.py",
+    "entitlement": "tools/admission.py",
+    "portal": "tools/portal_server.py",
+    "spec_witness": "docs/PAAS_GAP_REGISTER.md",
+    "reference_pattern": "Nocalhost Web+API+Dep + BlueMix SSO/Entitlement/Broker/Token/BSS — unified, k8s-native, open, governed; the sovereign answer to proprietary Cloud Foundry"
+  },
+  "composes_with": {
+    "inner_loop": "caps.dev.devspace-inner-loop@0.1.0",
+    "git_push_deploy": "caps.dev.git-push-deploy@0.1.0",
+    "control_plane": "caps.infra.paas.continuum-local@0.1.0",
+    "scales_up_to": "caps.infra.cluster-scaleup.hyperswarm@0.1.0"
+  },
+  "policy": {
+    "availability": "needs-work",
+    "open_service_broker": true,
+    "entitlement_tiers": true,
+    "metered_billing": true,
+    "sealed_provisioning": true,
+    "k8s_native": true,
+    "evidence_emitting": true
+  }
+}
