@@ -85,13 +85,29 @@ def check_egress_invariant(mounts: list) -> dict:
                        else f"{len(egress)} egress mounts ({egress}); the invariant is at most one, named")}
 
 
-def backend_for(*, intent: str, link_availability: str, durability: str) -> dict:
-    """intent x link_availability x durability -> backend. The reconciliation burden is a function of
-    this product, not a property of the data. Over a reliable link: REFERENCE-mount (no copy)."""
+def backend_for(*, intent: str, link_availability: str, durability: str, needs: dict | None = None,
+                offline_tolerant: bool = False, store_locality: str = "remote") -> dict:
+    """intent x link_availability x durability x NEEDS -> backend. The reconciliation burden is a
+    function of this product, not a property of the data.
+
+    The Needs firewall prunes the lattice BEFORE link availability, because two Needs forbid the
+    cheap reference-mount outright:
+      * a `no_egress` Need on a REMOTE store — a remote reference-mount *is* egress, so it's
+        forbidden; the data must be copied local.
+      * offline-tolerance — a reference-mount has zero offline capability (cut the link, it fails),
+        so a workload that must survive link loss has to cache locally even over a reliable link.
+    Only after those prunes does link availability pick reference-mount vs copy+reconcile.
+    """
+    needs = needs or {}
+    if needs.get("no_egress") and store_locality == "remote":
+        return {"backend": "local-copy", "copy": True, "reconciliation": durability == "canonical",
+                "note": "no_egress Need forbids a remote reference-mount (which IS egress) -> local copy"}
+    if offline_tolerant:
+        return {"backend": "local-cache", "copy": True, "reconciliation": durability == "canonical",
+                "note": "offline-tolerant: a reference-mount fails on link loss -> local cache"}
     if link_availability == "reliable":
         return {"backend": "reference-mount", "copy": False, "reconciliation": False,
                 "note": "mount it, don't sync it — no second copy, no divergence, no CRF machinery"}
-    # intermittent link -> forced into copy semantics
     if durability == "canonical":
         return {"backend": "copy+reconcile", "copy": True, "reconciliation": True,
                 "note": "intermittent + canonical: copy forces divergence -> conflict-resolution (SP-EVAL-CRF-001)"}

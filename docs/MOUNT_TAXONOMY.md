@@ -75,6 +75,15 @@ Mellumwork ternary / conflict-resolution-faithfulness machinery is paid *only* o
 Add `reference mount (no copy)` as a fourth column on the intermittent-link box with the availability
 precondition on the edge, and the two diagrams are one.
 
+**The Needs firewall prunes the lattice first.** `backend_for` now takes `needs` +
+`offline_tolerant` + `store_locality`, and two Needs forbid the cheap reference-mount *before* link
+availability is even consulted: a **`no_egress`** Need on a **remote** store (a remote reference-mount
+*is* egress → forced to a local copy), and **offline-tolerance** (a reference-mount has zero offline
+capability → must cache locally even over a reliable link). A `no_egress` Need on a *local* store is
+fine — a local mount is not egress. So the real signature is
+`intent × link × durability × needs → backend`, and the Needs firewall and the mount lattice are one
+plane, not two.
+
 ## The honest counterexample
 
 The sandbox's root ext4 is simultaneously runtime image, scratch, cache, and working directory — the

@@ -65,6 +65,21 @@ def test_backend_lattice_reference_mounts_over_reliable_links():
     assert derived["copy"] is True and derived["reconciliation"] is False
 
 
+def test_needs_prune_the_lattice_before_link_availability():
+    # a no_egress Need on a REMOTE store: a remote reference-mount IS egress -> forbidden -> local copy
+    remote = ds.backend_for(intent="canonical", link_availability="reliable", durability="canonical",
+                            needs={"no_egress": True}, store_locality="remote")
+    assert remote["backend"] == "local-copy" and remote["copy"] is True
+    # but a LOCAL store may still be reference-mounted under no_egress (a local mount is not egress)
+    local = ds.backend_for(intent="canonical", link_availability="reliable", durability="canonical",
+                           needs={"no_egress": True}, store_locality="local")
+    assert local["backend"] == "reference-mount"
+    # offline-tolerance forbids reference-mount even over a reliable link (it fails on link loss)
+    off = ds.backend_for(intent="canonical", link_availability="reliable", durability="canonical",
+                         offline_tolerant=True)
+    assert off["backend"] == "local-cache" and off["copy"] is True
+
+
 if __name__ == "__main__":
     import sys
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
