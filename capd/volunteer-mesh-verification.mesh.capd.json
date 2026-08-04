@@ -6,6 +6,7 @@
   "description": "How a Folding@home-scale volunteer grid (hundreds of thousands of anonymous, churny, possibly-malicious workers) becomes trustworthy. A Grant proves WHO ran a Work Unit; it cannot prove the RESULT is correct. This plane verifies results fail-closed: a Work Unit is run redundantly on N independent workers and only a result a quorum agrees on (identical output digest) is accepted; stochastic tasks use spot-check canaries with known answers; reliable backends (a cluster, per CluBORun) can stand in as reference verifiers. Reputation is a per-worker verified-success record that weights allocation and routes around bad actors. Implements the Dual-Orchestration PROOF_MODE (redundant | spot_check | tee | zk | optimistic).",
   "links": {
     "engine": "tools/work_unit.py",
+    "scheduler": "tools/lease_scheduler.py",
     "executor": "tools/executor.py",
     "placement": "tools/compute_plane.py",
     "grant_authority": "tools/mcp_a2a_grant.py",

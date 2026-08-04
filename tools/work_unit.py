@@ -16,6 +16,9 @@ This implements the Dual-Orchestration `PROOF_MODE` verification, fail-closed:
 
 Reputation is a per-worker moving record of verified successes; it weights future allocation and is
 how the mesh routes around bad actors without trusting any single node.
+
+Dispatch of Work Units to workers is pull/lease (see `lease_scheduler.py`): verification here is the
+optional overlay layered on top, keyed on stakes x reputation.
 """
 from __future__ import annotations
 
