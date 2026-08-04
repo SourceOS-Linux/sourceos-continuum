@@ -1,0 +1,31 @@
+{
+  "capability_id": "caps.dev.git-push-webhook@0.1.0",
+  "kind": "dev.push-trigger",
+  "status": "experimental",
+  "name": "Git-push webhook — the fail-closed trigger that turns a real push into a deploy",
+  "description": "The trigger half of git-push-deploy: a governed webhook receiver a git host (Gitea/GitHub) POSTs to on every push, which runs deploy_flow.on_push and opens the per-branch preview. It is FAIL-CLOSED at the door — an unsigned or mis-signed push is never built and never deployed. Every delivery is verified in constant time against the project's HMAC-SHA256 secret (GitHub `X-Hub-Signature-256`, Gitea `X-Gitea-Signature`) before any work starts, and yields a sealed, tamper-evident receipt bound to the exact request-body digest; the secret never appears in the decision or the receipt. The full source manifest at the pushed commit is resolved by an injected checkout of the pushed SHA. This closes the last gap in the Vercel/Heroku ergonomic: `git push` now literally deploys, sovereign and governed.",
+  "links": {
+    "engine": "tools/push_webhook.py",
+    "flow": "tools/deploy_flow.py",
+    "build": "tools/buildpack.py",
+    "preview": "tools/devspace.py",
+    "promotion": "tools/promotion_gate.py",
+    "receipts": "artifacts/webhook-receipts/",
+    "spec_witness": "docs/BUILD_DEPLOY.md",
+    "reference_pattern": "GitHub/Gitea signed webhooks (X-Hub-Signature-256 / X-Gitea-Signature, HMAC-SHA256 over the raw body) — met sovereign: constant-time verify, fail-closed, sealed receipt, secret never echoed"
+  },
+  "composes_with": {
+    "deploy": "caps.dev.git-push-deploy@0.1.0",
+    "inner_loop": "caps.dev.devspace-inner-loop@0.1.0",
+    "control_plane": "caps.infra.paas.continuum-local@0.1.0",
+    "scales_up_to": "caps.infra.cluster-scaleup.hyperswarm@0.1.0"
+  },
+  "policy": {
+    "availability": "needs-work",
+    "fail_closed": true,
+    "signature_required": true,
+    "constant_time_verify": true,
+    "secret_never_echoed": true,
+    "evidence_emitting": true
+  }
+}
