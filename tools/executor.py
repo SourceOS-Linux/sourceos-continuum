@@ -77,15 +77,23 @@ class K8sAdapter:
         if pvc:
             container["volumeMounts"] = [{"name": "inception", "mountPath": "/var/lib/sourceos/inception"}]
             pod_spec["volumes"] = [{"name": "inception", "persistentVolumeClaim": {"claimName": pvc}}]
+        job_spec = {"backoffLimit": 0, "ttlSecondsAfterFinished": 3600,
+                    "template": {"metadata": {"labels": {"sourceos.io/grant-id": grant["grant_id"]}},
+                                 "spec": pod_spec}}
+        # Parallel / MPI job (the IBM Parallel Environment POE pattern): an Indexed Job runs N tasks,
+        # each getting JOB_COMPLETION_INDEX as its rank.
+        parallelism = int(workload.get("parallelism", 1))
+        if parallelism > 1:
+            job_spec["parallelism"] = parallelism
+            job_spec["completions"] = int(workload.get("completions", parallelism))
+            job_spec["completionMode"] = "Indexed"
         return {
             "apiVersion": "batch/v1", "kind": "Job",
             "metadata": {"generateName": f"{workload.get('name', 'wl')}-",
                          "labels": {"sourceos.io/grant-id": grant["grant_id"],
                                     "sourceos.io/session": grant["binding"].get("session_id", ""),
                                     "sourceos.io/backend": "k8s"}},
-            "spec": {"backoffLimit": 0, "ttlSecondsAfterFinished": 3600,
-                     "template": {"metadata": {"labels": {"sourceos.io/grant-id": grant["grant_id"]}},
-                                  "spec": pod_spec}},
+            "spec": job_spec,
         }
 
     def dispatch(self, workload, decision, grant, *, apply):
@@ -127,9 +135,61 @@ class DescriptorAdapter:
                 "note": f"hand this descriptor to the {self.backend} scheduler over a Grant-bound channel"}
 
 
+class SlurmAdapter:
+    """HPC/SLURM: emits a real sbatch script (the IBM Parallel Environment POE pattern — N tasks via
+    --ntasks, launched with srun for MPI ranks) and submits it via `ssh <login> sbatch` when a login
+    node is configured (SOURCEOS_SLURM_LOGIN), else emits the script."""
+    backend = "hpc-slurm"
+
+    def sbatch_script(self, workload, grant):
+        ntasks = int(workload.get("parallelism", 1))
+        nodes = int(workload.get("nodes", 1))
+        lines = ["#!/bin/bash",
+                 f"#SBATCH --job-name={workload.get('name', 'sourceos')}",
+                 f"#SBATCH --ntasks={ntasks}",
+                 f"#SBATCH --nodes={nodes}",
+                 f"#SBATCH --comment=grant:{grant['grant_id']}"]
+        if workload.get("needs_gpu"):
+            lines.append("#SBATCH --gres=gpu:1")
+        cmd = workload.get("command") or "true"
+        lines.append(f"srun {cmd}" if ntasks > 1 else cmd)  # srun launches the N MPI ranks
+        return "\n".join(lines) + "\n"
+
+    def dispatch(self, workload, decision, grant, *, apply):
+        import os
+        script = self.sbatch_script(workload, grant)
+        login = os.environ.get("SOURCEOS_SLURM_LOGIN")
+        if apply and login and shutil.which("ssh"):
+            proc = subprocess.run(["ssh", login, "sbatch"], input=script,
+                                  capture_output=True, text=True, timeout=60)
+            return {"kind": "hpc-slurm", "applied": proc.returncode == 0, "script": script,
+                    "login": login, "sbatch": proc.stdout.strip() or proc.stderr.strip()}
+        return {"kind": "hpc-slurm", "applied": False, "script": script,
+                "note": "set SOURCEOS_SLURM_LOGIN to submit via `ssh <login> sbatch`"}
+
+
+class ConnectorAdapter:
+    """A remote connector call (Gemini/OpenAI/Claude Files API, or an MCP tool) as a GOVERNED
+    dispatch — the same materialize->handle->dispatch->result shape as a compute job, gated by the
+    same Grant. Emits the connector-call descriptor; the grant-bound connector runtime makes the
+    actual call."""
+    backend = "connector"
+
+    def dispatch(self, workload, decision, grant, *, apply):
+        return {"kind": "connector", "applied": False,
+                "call": {"connector": workload.get("connector", "mcp"),
+                         "operation": workload.get("operation", "tools/call"),
+                         "artifact_ref": workload.get("artifact_ref"),
+                         "effect": grant["capability"].get("effect"),
+                         "grant_id": grant["grant_id"],
+                         "session": grant["binding"].get("session_id")},
+                "note": "grant-bound connector call (materialize -> handle -> dispatch -> result)"}
+
+
 def default_adapters() -> dict:
-    ad = {LocalAdapter().backend: LocalAdapter(), K8sAdapter().backend: K8sAdapter()}
-    for b in ("hpc-slurm", "wasm-edge", "p2p-mesh", "volunteer-boinc", "blockchain-rlc"):
+    ad = {LocalAdapter().backend: LocalAdapter(), K8sAdapter().backend: K8sAdapter(),
+          SlurmAdapter().backend: SlurmAdapter(), ConnectorAdapter().backend: ConnectorAdapter()}
+    for b in ("wasm-edge", "p2p-mesh", "volunteer-boinc", "blockchain-rlc"):
         ad[b] = DescriptorAdapter(b)
     return ad
 

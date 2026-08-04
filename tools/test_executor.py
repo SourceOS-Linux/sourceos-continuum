@@ -91,12 +91,45 @@ def test_k8s_mounts_the_inception_pvc_when_requested():
 
 
 def test_descriptor_adapter_emits_a_backend_specific_descriptor():
-    d = _decision("hpc-slurm")
-    res = ex.execute({"command": "srun train", "effect": "compute"}, d, _grant(d, "compute"),
+    d = _decision("wasm-edge")
+    res = ex.execute({"command": "run", "effect": "compute"}, d, _grant(d, "compute"),
                      session_id="sess_exec1", verifier=VERIFIER)
-    assert res["dispatch"]["kind"] == "hpc-slurm"
-    assert res["dispatch"]["descriptor"]["backend"] == "hpc-slurm"
-    assert res["dispatch"]["descriptor"]["executor_ref"] == "node://hpc-slurm"
+    assert res["dispatch"]["kind"] == "wasm-edge"
+    assert res["dispatch"]["descriptor"]["backend"] == "wasm-edge"
+    assert res["dispatch"]["descriptor"]["executor_ref"] == "node://wasm-edge"
+
+
+def test_k8s_parallel_workload_emits_an_indexed_job():
+    d = _decision("k8s")
+    res = ex.execute({"command": "python rank.py", "effect": "compute", "parallelism": 4},
+                     d, _grant(d, "compute"), session_id="sess_exec1", verifier=VERIFIER, apply=False)
+    spec = res["dispatch"]["manifest"]["spec"]
+    assert spec["parallelism"] == 4 and spec["completions"] == 4
+    assert spec["completionMode"] == "Indexed"  # each task gets JOB_COMPLETION_INDEX = its rank
+
+
+def test_slurm_adapter_emits_a_real_sbatch_script_with_ntasks_and_srun():
+    d = _decision("hpc-slurm")
+    res = ex.execute({"name": "train", "command": "python train.py", "effect": "compute",
+                      "parallelism": 8, "nodes": 2, "needs_gpu": True},
+                     d, _grant(d, "compute"), session_id="sess_exec1", verifier=VERIFIER)
+    script = res["dispatch"]["script"]
+    assert "#SBATCH --ntasks=8" in script and "#SBATCH --nodes=2" in script
+    assert "#SBATCH --gres=gpu:1" in script
+    assert "srun python train.py" in script            # srun launches the MPI ranks
+    assert "grant:" in script                          # bound to the grant
+
+
+def test_connector_adapter_dispatches_a_grant_bound_call():
+    d = _decision("connector")
+    grant = _grant(d, "egress")
+    res = ex.execute({"effect": "egress", "connector": "openai-files", "operation": "files.create",
+                      "artifact_ref": "commons:data/corpus@1"},
+                     d, grant, session_id="sess_exec1", verifier=VERIFIER)
+    call = res["dispatch"]["call"]
+    assert call["connector"] == "openai-files" and call["operation"] == "files.create"
+    assert call["artifact_ref"] == "commons:data/corpus@1" and call["effect"] == "egress"
+    assert call["grant_id"] == grant["grant_id"]  # grant-bound
 
 
 # ── fail-closed on the Grant ─────────────────────────────────────────────────────────

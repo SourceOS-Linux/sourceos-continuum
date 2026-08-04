@@ -51,11 +51,12 @@ def _sha(s: str) -> str:
 
 def run_workload(*, name, command, effect, sensitivity, scalable, gpu, image, subject,
                  heartbeats_dir, key, apply=False, dry=False, admission=None, cost=1.0,
-                 inception=False) -> dict:
+                 inception=False, parallelism=1, nodes=1) -> dict:
     """Core of `run` — testable without the CLI. Returns the full spine trace (or a placement)."""
     reg = mt.MeshRegistry.from_dir(heartbeats_dir)
     workload = {"name": name, "command": command, "effect": effect, "sensitivity": sensitivity,
-                "scalable": scalable, "needs_gpu": gpu, "image": image}
+                "scalable": scalable, "needs_gpu": gpu, "image": image,
+                "parallelism": parallelism, "nodes": nodes}
     if inception:  # mount the agent-machine's persistent TopoLVM inception mount (k8s backend)
         import devspace
         workload["inception_pvc"] = devspace.INCEPTION_PVC
@@ -77,12 +78,15 @@ def cmd_run(args) -> int:
     if _dev_mode():
         print("!  DEV MODE: no SOURCEOS_SIGNING_KEY set — synthesizing a dev attestation + HMAC key. "
               "Not for production.", file=sys.stderr)
-    admission = None if args.dry else adm.AdmissionController(ledger_path=LEDGER)
+    # `place` reuses cmd_run but its parser omits the run-only flags — read them defensively.
+    dry = getattr(args, "dry", False)
+    admission = None if dry else adm.AdmissionController(ledger_path=LEDGER)
     out = run_workload(name=args.name, command=args.command, effect=args.effect,
                        sensitivity=args.sensitivity, scalable=not args.no_scale, gpu=args.gpu,
                        image=args.image, subject=args.subject, heartbeats_dir=HEARTBEATS,
-                       key=_key(), apply=args.apply, dry=args.dry, admission=admission, cost=args.cost,
-                       inception=args.inception)
+                       key=_key(), apply=getattr(args, "apply", False), dry=dry, admission=admission,
+                       cost=getattr(args, "cost", 1.0), inception=getattr(args, "inception", False),
+                       parallelism=getattr(args, "parallelism", 1), nodes=getattr(args, "nodes", 1))
     if out["status"] == "denied":
         a = out["admission"]
         print(f"DENIED (fail-closed): {a['reason']}  [usage {a['usage']} vs quota {a['quota']}]")
@@ -145,6 +149,8 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--effect", default="compute", choices=["read", "write", "compute", "exec", "egress"])
     r.add_argument("--sensitivity", default="normal", choices=["normal", "sensitive"])
     r.add_argument("--gpu", action="store_true", help="workload needs a GPU")
+    r.add_argument("--parallelism", type=int, default=1, help="N parallel tasks/ranks (k8s Indexed Job / SLURM --ntasks)")
+    r.add_argument("--nodes", type=int, default=1, help="node count for the parallel job (SLURM --nodes)")
     r.add_argument("--no-scale", action="store_true", help="keep it small (non-scalable)")
     r.add_argument("--subject", default="spiffe://sourceos/agent/dev", help="the requesting subject SPIFFE id")
     r.add_argument("--cost", type=float, default=1.0, help="cost units to charge against the subject's budget")
