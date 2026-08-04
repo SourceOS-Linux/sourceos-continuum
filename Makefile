@@ -24,6 +24,9 @@ mesh-demo: ## seed a live demo mesh (heartbeats) so the portal shows live teleme
 grant: ## demo the zero-trust attach flow: Attest -> Decide -> Grant -> verify-at-node
 	python3 tools/mcp_a2a_grant.py
 
+commons: ## reproducible knowledge commons: ingest the estate's CapDs + workloads as citable records
+	python3 tools/commons.py
+
 onboard: ## bring up a workstation: local sovereign forge + local cluster + sourceosctl
 	@echo "[continuum] onboard — scaffold: wires Gitea bring-up + kind/k3s + sourceos-devtools/sourceosctl"
 

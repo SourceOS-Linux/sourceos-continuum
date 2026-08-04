@@ -1,0 +1,30 @@
+{
+  "capability_id": "caps.knowledge.commons@0.1.0",
+  "kind": "knowledge.reproducible-commons",
+  "status": "experimental",
+  "name": "Reproducible Knowledge Commons",
+  "description": "A Zenodo-style citable, content-addressed, reproducible, reusable layer over the whole estate. Every capability, workload, model, dataset, or semantic action becomes a commons record with a DOI-like id (commons:<domain>/<name>@<version>+<digest>), its reproducibility provenance, and its reuse history. Folds three demonstrated systems into one governed plane: Zenodo/reproducible-fusion (content-addressed + citable + reproducibility-graded, fail-closed on the claim), ARM / Asset Reuse Manager (Domain->Category->Asset + recommendation + use/evaluate feedback), and the Semantic API/ontology (records carry a declarative semantic_action). Ingests the estate's own CapDs + suite workloads, so the compute-mesh / cloud-shell fog work is itself first-class citable here.",
+  "links": {
+    "engine": "tools/commons.py",
+    "portal": "tools/portal_server.py",
+    "agent_surface": "tools/mcp_ops_server.py",
+    "ledger": "artifacts/gate-decisions + mcp-receipts (sealed)",
+    "spec_witness": "docs/KNOWLEDGE_COMMONS.md",
+    "reference_pattern": "IBM Asset Reuse Manager (ARM) + MLOps 3-phase reproducible pipeline + Semantic API/ontology — met and bettered: one governed, content-addressed, reproducibility-graded commons instead of three separate systems"
+  },
+  "composes_with": {
+    "compute_plane": "caps.compute.mesh-plane@0.1.0",
+    "fog": "caps.compute.cloudshell-fog@0.1.0",
+    "control_plane": "caps.infra.paas.continuum-local@0.1.0",
+    "scales_up_to": "caps.infra.cluster-scaleup.hyperswarm@0.1.0"
+  },
+  "policy": {
+    "content_addressed": true,
+    "citable": true,
+    "reproducibility_gate": true,
+    "arm_reuse_feedback": true,
+    "semantic_action_catalog": true,
+    "evidence_emitting": true,
+    "read_only_portal": true
+  }
+}

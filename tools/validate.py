@@ -21,11 +21,13 @@ REQUIRED = [
     "capd/compute-plane.mesh.capd.json",
     "capd/devspace.local-dev.capd.json",
     "capd/cloudshell-fog.capd.json",
+    "capd/knowledge-commons.mesh.capd.json",
     "tools/promotion_gate.py",
     "tools/portal_server.py",
     "tools/compute_plane.py",
     "tools/mesh_telemetry.py",
     "tools/mcp_a2a_grant.py",
+    "tools/commons.py",
 ]
 CAPD_KEYS = ("capability_id", "kind", "status", "links", "composes_with", "policy")
 # Every CapD in capd/ must carry the core keys and parse — not just the flagship control-plane one.
@@ -33,6 +35,7 @@ EXTRA_CAPD_IDS = {
     "capd/compute-plane.mesh.capd.json": "caps.compute.mesh-plane",
     "capd/devspace.local-dev.capd.json": "caps.dev.devspace-inner-loop",
     "capd/cloudshell-fog.capd.json": "caps.compute.cloudshell-fog",
+    "capd/knowledge-commons.mesh.capd.json": "caps.knowledge.commons",
 }
 
 errors: list[str] = []

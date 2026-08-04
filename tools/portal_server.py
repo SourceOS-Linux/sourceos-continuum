@@ -103,6 +103,17 @@ def _placements() -> dict:
     return {"placements": out, "availability": avail}
 
 
+def _commons() -> dict:
+    """The Reproducible Knowledge Commons: every estate capability + workload as a citable,
+    content-addressed record, honestly graded reproducible vs. declared."""
+    c = _sib("commons").estate_commons(_ROOT)
+    recs = c.records()
+    return {"total": len(recs), "reproducible": len(c.search(reproducible=True)),
+            "records": [{"commons_id": r["commons_id"], "domain": r["domain"],
+                         "asset_type": r["asset_type"], "reproducibility": r["reproducibility"],
+                         "cite": r["cite"]} for r in recs]}
+
+
 _CONSOLE = """<!doctype html><html lang=en><head><meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1"><title>SourceOS Continuum — Console</title>
 <style>
@@ -129,6 +140,10 @@ h2{margin:0 0 10px;font-size:14px;letter-spacing:.04em;text-transform:uppercase;
 <section id=suite><h2>App suite on the mesh &mdash; live placement</h2>
 <div class=muted>Where each product's workload lands right now, under its policy and current availability. <span class=gov>BLOCKED</span> = fail-closed, no compliant node live.</div>
 <div id=suitebody class=muted style=margin-top:10px>loading…</div></section>
+<section id=commons><h2>Reproducible Knowledge Commons</h2>
+<div class=muted>Every capability + workload as a citable, content-addressed record (Zenodo-style). <span class=gov>reproducible</span> = provenance carries the digests to reproduce it; <span class=muted>declared</span> = registered but not yet reproducibility-backed.</div>
+<div id=commonssum class=muted style=margin-top:8px></div>
+<div id=commonsbody class=muted style=margin-top:10px>loading…</div></section>
 <section id=evi><h2>Sealed evidence (latest)</h2><div class=muted>loading…</div></section>
 </main>
 <script>
@@ -151,6 +166,11 @@ j('/api/placements').then(d=>{document.getElementById('suitebody').innerHTML=
  (d.placements.map(p=>{const b=p.backend?`<code>${esc(p.backend)}</code>`:'<span style=color:#e28a8a>BLOCKED</span>';
   const tr=p.backend_trust?` <span class="pill ${p.backend_trust==='untrusted'?'exp':''}">${esc(p.backend_trust)}</span>`:'';
   return `<div class=row><span><b>${esc(p.product)}</b> <span class=muted>${esc(p.id)}</span></span><span>${b}${tr}</span></div>`}).join('')||'<div class=muted>no profiles</div>')})
+j('/api/commons').then(d=>{
+ document.getElementById('commonssum').innerHTML=`&#9679; <b>${esc(d.total)}</b> records &middot; <span class=gov>${esc(d.reproducible)} reproducible</span>`;
+ document.getElementById('commonsbody').innerHTML=
+ d.records.map(r=>`<div class=row><span><code>${esc(r.commons_id.split('+')[0])}</code> <span class=muted>${esc(r.asset_type)}</span></span>`+
+ `<span class="pill ${r.reproducibility==='reproducible'?'':'exp'}">${esc(r.reproducibility)}</span></div>`).join('')})
 </script></body></html>"""
 
 
@@ -163,7 +183,7 @@ def route(path: str) -> tuple[int, str, str]:
         return 200, "text/plain", "ok"
     api = {"/api/capabilities": _capabilities, "/api/lifecycle": _lifecycle,
            "/api/evidence": _evidence, "/api/compute": _compute,
-           "/api/mesh": _mesh, "/api/placements": _placements}
+           "/api/mesh": _mesh, "/api/placements": _placements, "/api/commons": _commons}
     if path in api:
         return 200, "application/json", json.dumps(api[path](), indent=2, sort_keys=True)
     return 404, "text/plain", "not found"
