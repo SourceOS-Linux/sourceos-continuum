@@ -24,7 +24,7 @@ diagrams feel seamless is mostly missing — that's what this register makes exp
 | **Nocalhost-Web** (admin web console) | portal (read-only dev console) | ◑ (no admin console) |
 | **Nocalhost-API** (REST) | MCP ops surface (agent JSON-RPC) | ◑ (no REST admin API) |
 | **Nocalhost-Dep** (cluster-side dep, `nocalhost-reserved` ns) | — | ○ **GAP: no cluster-side controller/operator** |
-| **Login** / auth | — | ○ **GAP: no login/session/SSO** |
+| **Login** / auth | `login.py` (session core) + `sso.py` (real OIDC + WebAuthn/FIDO2 verify) | ◑ (verify core done; asymmetric-sig verifier injected, not yet wired to a live IdP) |
 | Admin: **Create User** | — | ○ **GAP** (this change closes it) |
 | Admin: **Configure Cluster** | CapDs (static) | ◑ |
 | Admin: **Configure Application** | buildpack + workload specs | ◑ |
@@ -35,7 +35,7 @@ diagrams feel seamless is mostly missing — that's what this register makes exp
 |---|---|---|
 | **Load Balancer** | — | ○ GAP (no ingress LB in continuum) |
 | DataWorks **UI App Server** | portal | ◑ |
-| **BlueMix SSO service** | — | ○ **GAP: no SSO** |
+| **BlueMix SSO service** | `sso.py` — OIDC (auth-code + PKCE, ID-token validation) + WebAuthn/FIDO2 | ◑ (fail-closed verify core, stdlib; asymmetric-signature step injected) |
 | **BlueMix Entitlement service** | admission **tiers** | ◑ (tier data, no entitlement *service*/token) |
 | **Watson Token Server** (per-tenant) + **/me API** | grants (session tokens) | ◑ (no token server / user-profile `/me`) — this change adds `/me` |
 | **Service Broker** (add tenant / provision new VM) | `devspace` manifests | ○ **GAP** (this change closes it) |
@@ -68,9 +68,17 @@ BlueMix calls it SSO+Entitlement+Broker+Token+BSS. It's the same server. `tools/
 (this change) builds the governed core of it — provision/bind/deprovision a tenant (DevSpace + tier +
 session), meter usage, and `/me` — and the portal exposes `/api/me` + `/api/provision`.
 
-**Still open after this change** (the honest ranked backlog): IDE plugin · running remote terminal ·
-real login/SSO · cluster-side dep operator · load-balancer + RM-A/B failover HA · ELK/Grafana
-dashboards · landing page. Named here so nothing hides.
+**Shipped since (front door + deploy).** The developer/human front door is now real and governed:
+`login.py` session core + **`sso.py`** (OIDC auth-code+PKCE + WebAuthn/FIDO2, fail-closed, stdlib) →
+the git-push-to-deploy ergonomic is complete end-to-end: **`push_webhook.py`** (HMAC-verified trigger)
+→ `deploy_flow.py` preview → promotion gate → **`release_ledger.py`** (instant, reproducible,
+fail-closed rollback). The machine door (webhook, HMAC) and the human door (SSO, OIDC/WebAuthn) share
+one posture: a zero-trust gate, not an open hook.
+
+**Still open** (the honest ranked backlog): IDE plugin · running remote terminal · **live IdP wiring**
+for `sso.py`'s injected asymmetric-signature verifier (JWKS/`cryptography`) · cluster-side dep
+operator · load-balancer + RM-A/B failover HA · ELK/Grafana dashboards · landing page. Named here so
+nothing hides.
 
 ## Cloud Foundry / BlueMix — similar, different, and why ours is best-of-all
 

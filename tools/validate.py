@@ -29,6 +29,7 @@ REQUIRED = [
     "capd/git-push-deploy.mesh.capd.json",
     "capd/git-push-webhook.mesh.capd.json",
     "capd/instant-rollback.mesh.capd.json",
+    "capd/sso-front-door.mesh.capd.json",
     "capd/provisioning-plane.mesh.capd.json",
     "tools/promotion_gate.py",
     "tools/portal_server.py",
@@ -54,6 +55,7 @@ REQUIRED = [
     "tools/push_webhook.py",
     "tools/release_ledger.py",
     "tools/login.py",
+    "tools/sso.py",
     "tools/edge_worker.py",
 ]
 CAPD_KEYS = ("capability_id", "kind", "status", "links", "composes_with", "policy")
@@ -70,6 +72,7 @@ EXTRA_CAPD_IDS = {
     "capd/git-push-deploy.mesh.capd.json": "caps.dev.git-push-deploy",
     "capd/git-push-webhook.mesh.capd.json": "caps.dev.git-push-webhook",
     "capd/instant-rollback.mesh.capd.json": "caps.dev.instant-rollback",
+    "capd/sso-front-door.mesh.capd.json": "caps.dev.sso-front-door",
     "capd/provisioning-plane.mesh.capd.json": "caps.dev.provisioning",
 }
 
