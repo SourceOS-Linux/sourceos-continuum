@@ -1,6 +1,6 @@
 # SourceOS Continuum — lifecycle entry points.
 # Control-plane targets delegate to Makefile.porter (the rehomed Porter control plane).
-.PHONY: validate onboard dev-up dev-down shim-test test tools-test rollout promotion-gate portal compute mesh-demo grant commons mcp spine run loop verify lease sphere push push-webhook rollback edge login provision deploy inference availability
+.PHONY: validate onboard dev-up dev-down shim-test test tools-test rollout promotion-gate portal compute mesh-demo grant commons mcp spine run loop verify lease sphere push push-webhook rollback edge login sso provision deploy inference availability
 
 validate: ## repo hygiene + CapD validity
 	python3 tools/validate.py
@@ -59,6 +59,9 @@ edge: ## edge-worker demo: register the agent-machine into a cloud pool + evolve
 
 login: ## login/session demo: authenticate the front door (fail-closed)
 	cd tools && python3 login.py
+
+sso: ## SSO front door demo: OIDC + PKCE + WebAuthn/FIDO2 verification (fail-closed, stdlib-only)
+	cd tools && python3 sso.py
 
 provision: ## provisioning demo: tenant broker + entitlement tier + BSS meter + /me
 	cd tools && python3 provisioning.py

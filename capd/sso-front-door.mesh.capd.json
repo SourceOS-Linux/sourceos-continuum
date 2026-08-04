@@ -1,0 +1,31 @@
+{
+  "capability_id": "caps.dev.sso-front-door@0.1.0",
+  "kind": "dev.identity-sso",
+  "status": "experimental",
+  "name": "SSO front door — real OIDC + WebAuthn/FIDO2 verification, fail-closed, stdlib-only",
+  "description": "The 'who is this' layer above the login.py session core: the two real SSO mechanisms the cloud-shell-fog spec names, OIDC and WebAuthn/FIDO2, verified honestly with only the standard library. OIDC ID-token validation is strict and fail-closed (exact iss; aud/azp; exp/nbf/iat; nonce binding; alg 'none' always refused; HS256 verified via hmac). PKCE (S256) binds the authorization code to the client, with state (CSRF) and nonce (replay) checks. WebAuthn assertion verification checks ceremony type, challenge, origin, rpIdHash, user-present/user-verified flags, and signature-counter clone detection. Honest boundary: verifying an ASYMMETRIC signature (RS256/ES256 JWTs, WebAuthn credential keys) needs crypto the stdlib does not ship and must never be hand-rolled, so that one step is a clearly-marked injection point (verify_signature=…) wired in production to a JWKS/cryptography verifier — asymmetric algs are refused, never silently trusted, without it. A verified identity mints a login.py session; the same zero-trust, fail-closed posture the webhook gives machines, now for humans.",
+  "links": {
+    "engine": "tools/sso.py",
+    "session_core": "tools/login.py",
+    "machine_analogue": "tools/push_webhook.py (HMAC-verified machine door)",
+    "grant_binding": "tools/mcp_a2a_grant.py",
+    "spec_witness": "docs/SSO_FRONT_DOOR.md",
+    "reference_pattern": "OpenID Connect (auth-code + PKCE, ID-token claim validation) + W3C WebAuthn/FIDO2 (assertion verification) — met sovereign+stdlib: real claim/ceremony validation, alg:none refused, asymmetric signature verification as an injected JWKS/crypto step, never hand-rolled"
+  },
+  "composes_with": {
+    "session": "caps.dev.login-session@0.1.0",
+    "provisioning": "caps.dev.provisioning@0.1.0",
+    "control_plane": "caps.infra.paas.continuum-local@0.1.0",
+    "scales_up_to": "caps.infra.cluster-scaleup.hyperswarm@0.1.0"
+  },
+  "policy": {
+    "availability": "needs-work",
+    "fail_closed": true,
+    "alg_none_refused": true,
+    "pkce_required": true,
+    "nonce_replay_bound": true,
+    "webauthn_clone_detection": true,
+    "asymmetric_verify_injected_not_hand_rolled": true,
+    "evidence_emitting": false
+  }
+}
