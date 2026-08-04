@@ -1,6 +1,6 @@
 # SourceOS Continuum — lifecycle entry points.
 # Control-plane targets delegate to Makefile.porter (the rehomed Porter control plane).
-.PHONY: validate onboard dev-up dev-down shim-test test tools-test rollout promotion-gate portal compute mesh-demo grant commons mcp
+.PHONY: validate onboard dev-up dev-down shim-test test tools-test rollout promotion-gate portal compute mesh-demo grant commons mcp spine run
 
 validate: ## repo hygiene + CapD validity
 	python3 tools/validate.py
@@ -26,6 +26,12 @@ grant: ## demo the zero-trust attach flow: Attest -> Decide -> Grant -> verify-a
 
 commons: ## reproducible knowledge commons: ingest the estate's CapDs + workloads as citable records
 	python3 tools/commons.py
+
+spine: ## run the full execution spine demo: place -> grant -> verify -> dispatch -> sealed receipt
+	cd tools && python3 executor.py
+
+run: ## sourceosctl: run a workload governed across the mesh (e.g. make run ARGS="run --gpu --command 'python train.py'")
+	python3 tools/sourceosctl.py $(ARGS)
 
 onboard: ## bring up a workstation: local sovereign forge + local cluster + sourceosctl
 	@echo "[continuum] onboard — scaffold: wires Gitea bring-up + kind/k3s + sourceos-devtools/sourceosctl"
