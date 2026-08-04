@@ -45,6 +45,9 @@ lease: ## pull/lease scheduler demo: workers pull WUs, crash-stop re-lending, or
 sphere: ## data-sphere demo: immutable dm-verity sphere, construction-tenancy, intent x link x durability
 	cd tools && python3 data_sphere.py
 
+inference: ## sovereign inference demo: models as data spheres, fail-closed sovereign routing
+	cd tools && python3 inference.py
+
 availability: ## report the estate's availability-maturity grades (the Zero-Downtime legend)
 	cd tools && python3 availability.py
 

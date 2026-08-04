@@ -25,6 +25,7 @@ REQUIRED = [
     "capd/self-healing-loop.mesh.capd.json",
     "capd/volunteer-mesh-verification.mesh.capd.json",
     "capd/data-spheres.mesh.capd.json",
+    "capd/sovereign-inference.mesh.capd.json",
     "tools/promotion_gate.py",
     "tools/portal_server.py",
     "tools/compute_plane.py",
@@ -42,6 +43,7 @@ REQUIRED = [
     "tools/devmode.py",
     "tools/data_sphere.py",
     "tools/availability.py",
+    "tools/inference.py",
 ]
 CAPD_KEYS = ("capability_id", "kind", "status", "links", "composes_with", "policy")
 # Every CapD in capd/ must carry the core keys and parse — not just the flagship control-plane one.
@@ -53,6 +55,7 @@ EXTRA_CAPD_IDS = {
     "capd/self-healing-loop.mesh.capd.json": "caps.compute.self-healing-loop",
     "capd/volunteer-mesh-verification.mesh.capd.json": "caps.compute.volunteer-mesh-verification",
     "capd/data-spheres.mesh.capd.json": "caps.data.spheres",
+    "capd/sovereign-inference.mesh.capd.json": "caps.inference.sovereign",
 }
 
 errors: list[str] = []

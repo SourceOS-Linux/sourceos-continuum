@@ -1,0 +1,30 @@
+{
+  "capability_id": "caps.inference.sovereign@0.1.0",
+  "kind": "inference.sovereign",
+  "status": "experimental",
+  "name": "Sovereign inference — run LLMs on our own mesh, not a cloud provider",
+  "description": "The whole point of a sovereign PaaS: a sensitive prompt must never leave for a vendor LLM (OpenAI/Anthropic/Gemini). The mesh serves its own models — weights are immutable data spheres (provenance-tracked, residency ring-fenced, read-Grant-gated), served on a TRUSTED GPU backend the Needs firewall keeps sensitive work off untrusted/volunteer/vendor nodes. Inference routing is fail-closed: sensitive inference goes to a sovereign endpoint or it BLOCKS; it never silently falls back to a cloud connector. Where it runs — the always-on cloud twin or the box (direct/LAN) — is a placement decision; both are sovereign, twin by default.",
+  "links": {
+    "engine": "tools/inference.py",
+    "models": "tools/data_sphere.py",
+    "placement": "tools/compute_plane.py",
+    "grant_authority": "tools/mcp_a2a_grant.py",
+    "portal": "tools/portal_server.py",
+    "reference_pattern": "self-hosted vLLM/llama.cpp/Ollama/TGI on our mesh vs cloud LLM APIs — sovereign, governed, sensitive-data-safe; models as immutable data spheres"
+  },
+  "composes_with": {
+    "data_spheres": "caps.data.spheres@0.1.0",
+    "compute_plane": "caps.compute.mesh-plane@0.1.0",
+    "control_plane": "caps.infra.paas.continuum-local@0.1.0",
+    "scales_up_to": "caps.infra.cluster-scaleup.hyperswarm@0.1.0"
+  },
+  "policy": {
+    "availability": "needs-work",
+    "sovereign_first": true,
+    "sensitive_never_vendor": true,
+    "models_as_data_spheres": true,
+    "fail_closed": true,
+    "gpu_trusted_only": true,
+    "evidence_emitting": true
+  }
+}
