@@ -1,6 +1,6 @@
 # SourceOS Continuum — lifecycle entry points.
 # Control-plane targets delegate to Makefile.porter (the rehomed Porter control plane).
-.PHONY: validate onboard dev-up dev-down shim-test test tools-test rollout promotion-gate portal compute
+.PHONY: validate onboard dev-up dev-down shim-test test tools-test rollout promotion-gate portal compute mesh-demo grant commons mcp
 
 validate: ## repo hygiene + CapD validity
 	python3 tools/validate.py
@@ -48,3 +48,6 @@ promotion-gate: ## rollout gate: require an APPROVE review verdict (fail-closed,
 
 rollout: promotion-gate ## promote local → scale-up cluster (hyperswarm), gated on an APPROVE review verdict
 	@echo "[continuum] rollout — promote via caps.infra.cluster-scaleup.hyperswarm (promotion gate passed)"
+
+mcp: ## run the governed MCP ops surface (stdio; add ADD an agent client, e.g. Claude Code). Guarded tools fail-closed unless CONTINUUM_MCP_ALLOW_GUARDED=1
+	python3 tools/mcp_ops_server.py
