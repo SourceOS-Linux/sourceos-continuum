@@ -90,7 +90,7 @@ results back.
 | Governed dispatch of a WU | `executor` adapters (local/k8s/slurm/wasm/descriptor/connector) | ✅ |
 | Identity/attestation (move 4) | `mcp_a2a_grant` (SPIFFE binding + TPM/cosign attestation) | ✅ |
 | Quotas/admission | `admission.py` (additive; make credits additive-only per move 4) | ✅ |
-| Pull/lease streaming dispatch (move 2) | StreamLender + Limiter; heartbeat liveness (`mesh_telemetry` is the base) | ○ next |
+| **Pull/lease streaming dispatch (move 2)** | `lease_scheduler.py` — StreamLender + Limiter: workers pull/lease when idle (adaptive, no speed estimation), conservative single-copy, crash-stop re-lending by index, ordered re-merge, heartbeat liveness | ✅ (this change) |
 | Split data plane + DataBridge (move 3) | signed-URL nearest-endpoint upload + async replication + verify-download barrier | ○ next |
 | Instrumented signals + refusal (move 5) | wrap reputation/confidence as `{value,uncertainty,provenance,validity,refusal}` | ○ next |
 | Domain-scoped reputation (move 7) | per-`(worker,domain)` card on `work_unit.Reputation` | ○ next |
