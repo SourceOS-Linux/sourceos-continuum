@@ -64,9 +64,13 @@ cluster_up() {
     log "creating kind cluster '$CLUSTER' (ingress on ${HOST_HTTP}/${HOST_HTTPS})"
     # The committed config carries the canonical shape; the host ports are substituted
     # so the same file serves docker (80/443) and rootless podman (8080/8443).
-    sed -e "s/hostPort: 80$/hostPort: ${HOST_HTTP}/" \
-        -e "s/hostPort: 443$/hostPort: ${HOST_HTTPS}/" \
-        "$ROOT/local/kind-cluster.yaml" | kind create cluster --config -
+    # The mappings are inline flow style -- "{ containerPort: 80, hostPort: 80, ... }" --
+    # so anchor on the containerPort that precedes each hostPort rather than on the end
+    # of a line. An end-anchored pattern silently matches nothing and the cluster is
+    # created with the original privileged ports, which is how this fix failed once.
+    sed -E -e "s/(containerPort: 80, hostPort: )80/\1${HOST_HTTP}/" \
+           -e "s/(containerPort: 443, hostPort: )443/\1${HOST_HTTPS}/" \
+           "$ROOT/local/kind-cluster.yaml" | kind create cluster --config -
   fi
   kubectl cluster-info --context "kind-$CLUSTER" >/dev/null
 }
