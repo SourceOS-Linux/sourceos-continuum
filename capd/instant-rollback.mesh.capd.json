@@ -1,0 +1,30 @@
+{
+  "capability_id": "caps.dev.instant-rollback@0.1.0",
+  "kind": "dev.release-rollback",
+  "status": "experimental",
+  "name": "Instant rollback — re-point to a prior release's immutable image, sovereign",
+  "description": "The last of the Vercel/Heroku deploy ergonomics: one action and prod serves the previous release again. It is almost free here because every deploy produces a CONTENT-ADDRESSED, immutable image (a data sphere) — so a release is a sealed record binding (tenant, app, branch, image_digest, workload), and rolling back is re-pointing to a PRIOR release's already-built digest: no rebuild (instant), and reproducible (the digest guarantees you get back exactly the bits that ran). It is fail-closed: you can only roll back to a release that actually ran here; a target image that was never built+deployed is blocked and never served. Rolling forward to a new version still goes through the promotion gate; rollback to a known-prior-good release is the fast, sealed, audited escape hatch. Each rollback is itself a new auditable head release, so you can roll again either way.",
+  "links": {
+    "engine": "tools/release_ledger.py",
+    "deploy": "tools/deploy_flow.py",
+    "trigger": "tools/push_webhook.py",
+    "image_as_data_sphere": "tools/data_sphere.py",
+    "promotion": "tools/promotion_gate.py",
+    "spec_witness": "docs/BUILD_DEPLOY.md",
+    "reference_pattern": "Vercel/Heroku instant rollback (one-click revert to a prior immutable release) — met sovereign: content-addressed reproducible image, fail-closed to releases that ran, sealed+audited, rollback is itself a release"
+  },
+  "composes_with": {
+    "deploy": "caps.dev.git-push-deploy@0.1.0",
+    "trigger": "caps.dev.git-push-webhook@0.1.0",
+    "control_plane": "caps.infra.paas.continuum-local@0.1.0",
+    "scales_up_to": "caps.infra.cluster-scaleup.hyperswarm@0.1.0"
+  },
+  "policy": {
+    "availability": "needs-work",
+    "instant_no_rebuild": true,
+    "content_addressed_reproducible": true,
+    "fail_closed_to_prior_releases": true,
+    "rollback_is_audited_release": true,
+    "evidence_emitting": true
+  }
+}

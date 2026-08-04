@@ -6,6 +6,7 @@ import json
 import tempfile
 
 import push_webhook as pw
+import release_ledger as rl
 
 _SECRET = "s3cr3t-per-tenant"
 _PROJECT = {"tenant": "acme", "user": "alice", "app": "shop", "sensitivity": "normal"}
@@ -114,6 +115,25 @@ def test_receipt_is_sealed_and_persisted():
         assert written["receipt_digest"] == d["receipt_digest"]
         # the receipt is bound to the exact request body
         assert written["body_digest"] == pw._digest(raw)
+
+
+def test_deployed_push_records_a_rollbackable_release():
+    raw = _raw(_payload())
+    with tempfile.TemporaryDirectory() as td:
+        d = pw.handle_push(secret=_SECRET, sig_header=_sign(raw), raw_body=raw, project=_PROJECT,
+                           ledger_dir=td)
+        assert d["status"] == "deployed" and "release_id" in d
+        hist = rl.history(td, "acme", "shop")
+        assert len(hist) == 1 and hist[0]["release_id"] == d["release_id"]
+
+
+def test_build_failed_push_records_no_release():
+    raw = _raw(_payload(added=("README.md",), modified=("LICENSE",)))  # no buildpack match
+    with tempfile.TemporaryDirectory() as td:
+        d = pw.handle_push(secret=_SECRET, sig_header=_sign(raw), raw_body=raw, project=_PROJECT,
+                           ledger_dir=td)
+        assert d["status"] == "build-failed" and "release_id" not in d
+        assert rl.history(td, "acme", "shop") == []
 
 
 def test_secret_never_appears_in_decision_or_receipt():

@@ -68,3 +68,30 @@ we verify against the project's per-tenant secret **before any work starts**. A 
 validly signed is rejected with a sealed receipt and **no build is ever started** — the same
 fail-closed posture as the rest of the stack. So `git push` now literally deploys: the Vercel/Heroku
 ergonomic, sovereign and governed, with the trigger itself a zero-trust gate rather than an open hook.
+
+## Instant rollback (`release_ledger.py`)
+
+The other half of the Vercel/Heroku ergonomic is **instant rollback** — and it is almost free here,
+because of a property the stack already guarantees: **every deploy is a content-addressed, immutable
+image** (a data sphere). So a *release* is a sealed record binding `(tenant, app, branch,
+image_digest, workload)`, a successful push records one, and rolling back is just re-pointing to a
+**prior release's already-built digest**:
+
+```
+rollback(app)  ──>  find a PRIOR release that ran         ← target never ran here ⇒ BLOCKED, nothing served
+               ──>  re-point to its immutable image_digest ← NO REBUILD (instant), reproducible bits
+               ──>  record a new head release (kind=rollback, links from→to)   ← itself auditable
+               ──>  a SEALED decision
+```
+
+Two things this buys that a plain PaaS rollback doesn't:
+
+- **Reproducible, not "rebuild-and-hope."** The digest *is* the guarantee — you get back exactly the
+  bytes that ran, not a fresh build of an old ref.
+- **Fail-closed.** You can only roll back to a release that actually ran here; an image that was never
+  built and deployed is never served. Rolling *forward* to a new version still goes through the
+  promotion gate — rollback to a known-prior-good release is the fast, sealed, audited escape hatch.
+
+`make rollback ARGS="rollback <tenant> <app>"` (or `--to-digest <D>` / `--steps N`); `history` and
+`current` read the ledger. That completes the deploy ergonomic: **push → preview → promote → rollback**,
+every step governed, sealed, and sovereign.

@@ -28,6 +28,7 @@ REQUIRED = [
     "capd/sovereign-inference.mesh.capd.json",
     "capd/git-push-deploy.mesh.capd.json",
     "capd/git-push-webhook.mesh.capd.json",
+    "capd/instant-rollback.mesh.capd.json",
     "capd/provisioning-plane.mesh.capd.json",
     "tools/promotion_gate.py",
     "tools/portal_server.py",
@@ -51,6 +52,7 @@ REQUIRED = [
     "tools/provisioning.py",
     "tools/deploy_flow.py",
     "tools/push_webhook.py",
+    "tools/release_ledger.py",
     "tools/login.py",
     "tools/edge_worker.py",
 ]
@@ -67,6 +69,7 @@ EXTRA_CAPD_IDS = {
     "capd/sovereign-inference.mesh.capd.json": "caps.inference.sovereign",
     "capd/git-push-deploy.mesh.capd.json": "caps.dev.git-push-deploy",
     "capd/git-push-webhook.mesh.capd.json": "caps.dev.git-push-webhook",
+    "capd/instant-rollback.mesh.capd.json": "caps.dev.instant-rollback",
     "capd/provisioning-plane.mesh.capd.json": "caps.dev.provisioning",
 }
 
