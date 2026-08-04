@@ -50,6 +50,7 @@ REQUIRED = [
     "tools/provisioning.py",
     "tools/deploy_flow.py",
     "tools/login.py",
+    "tools/edge_worker.py",
 ]
 CAPD_KEYS = ("capability_id", "kind", "status", "links", "composes_with", "policy")
 # Every CapD in capd/ must carry the core keys and parse — not just the flagship control-plane one.
