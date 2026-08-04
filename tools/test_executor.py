@@ -60,6 +60,27 @@ def test_k8s_adapter_emits_a_valid_grant_labelled_job():
     assert m["spec"]["template"]["spec"]["restartPolicy"] == "Never"
 
 
+def test_k8s_manifest_carries_the_target_namespace():
+    d = _decision("k8s")
+    res = ex.execute({"command": "echo x", "effect": "exec"}, d, _grant(d, "exec"),
+                     session_id="sess_exec1", verifier=VERIFIER, apply=False)
+    assert res["dispatch"]["manifest"]["metadata"]["namespace"] == "sourceos-mesh"
+
+
+def test_k8s_apply_refuses_without_an_explicit_context():
+    # applying must NOT fall back to the current kube-context (could be prod) — it needs an explicit one.
+    import os
+    saved = os.environ.pop("SOURCEOS_KUBE_CONTEXT", None)
+    try:
+        d = _decision("k8s")
+        res = ex.execute({"command": "echo x", "effect": "exec"}, d, _grant(d, "exec"),
+                         session_id="sess_exec1", verifier=VERIFIER, apply=True)
+        assert res["dispatch"]["applied"] is False and "context" in res["dispatch"]["reason"]
+    finally:
+        if saved is not None:
+            os.environ["SOURCEOS_KUBE_CONTEXT"] = saved
+
+
 def test_descriptor_adapter_emits_a_backend_specific_descriptor():
     d = _decision("hpc-slurm")
     res = ex.execute({"command": "srun train", "effect": "compute"}, d, _grant(d, "compute"),

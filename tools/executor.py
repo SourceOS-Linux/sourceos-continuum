@@ -86,13 +86,27 @@ class K8sAdapter:
         }
 
     def dispatch(self, workload, decision, grant, *, apply):
+        import os
+        context = os.environ.get("SOURCEOS_KUBE_CONTEXT")
+        namespace = os.environ.get("SOURCEOS_KUBE_NAMESPACE", "sourceos-mesh")
         manifest = self.manifest(workload, decision, grant)
-        if apply and shutil.which("kubectl"):
-            proc = subprocess.run(["kubectl", "apply", "-f", "-"], input=json.dumps(manifest),
-                                  capture_output=True, text=True, timeout=60)
-            return {"kind": "k8s", "applied": proc.returncode == 0, "manifest": manifest,
-                    "kubectl": proc.stdout.strip() or proc.stderr.strip()}
-        return {"kind": "k8s", "applied": False, "manifest": manifest}
+        manifest["metadata"]["namespace"] = namespace
+        if not apply:
+            return {"kind": "k8s", "applied": False, "namespace": namespace, "manifest": manifest}
+        # Safety: NEVER dispatch to whatever kube-context happens to be current (that could be prod).
+        # Applying requires an explicit target context named in SOURCEOS_KUBE_CONTEXT.
+        if not context:
+            return {"kind": "k8s", "applied": False, "namespace": namespace, "manifest": manifest,
+                    "reason": "refusing to apply without SOURCEOS_KUBE_CONTEXT — won't dispatch to the current context"}
+        if not shutil.which("kubectl"):
+            return {"kind": "k8s", "applied": False, "namespace": namespace, "manifest": manifest,
+                    "reason": "kubectl not found"}
+        # `create`, not `apply`: a Job is one-shot + immutable, and `apply` rejects generateName.
+        cmd = ["kubectl", "--context", context, "create", "-n", namespace, "-f", "-"]
+        proc = subprocess.run(cmd, input=json.dumps(manifest), capture_output=True, text=True, timeout=60)
+        return {"kind": "k8s", "applied": proc.returncode == 0, "namespace": namespace,
+                "context": context, "manifest": manifest,
+                "kubectl": proc.stdout.strip() or proc.stderr.strip()}
 
 
 class DescriptorAdapter:
