@@ -50,6 +50,22 @@ def port_forward_command(*, namespace: str, pod: str, ports: list, context: str 
     return ["kubectl", *_ctx(context), "port-forward", "-n", namespace, f"pod/{pod}", *maps]
 
 
+def attach_command(*, namespace: str, pod: str, grant: dict, verifier, session_id: str,
+                   container: str = "dev", context: str | None = None) -> dict:
+    """Grant-bound remote terminal (Nocalhost AppA-terminal / cloud-shell attach). The fog-node Policy
+    Gate re-verifies the Grant (effect exec + op pty.attach, session-bound) BEFORE any PTY is opened —
+    fail-closed. Returns {authorized, command|reason, redactions}."""
+    import mcp_a2a_grant as g
+    check = g.verify_grant(grant, session_id=session_id, verifier=verifier,
+                           requested_effect="exec", requested_op="pty.attach")
+    if not check["result"]["valid"]:
+        return {"authorized": False, "reason": check["result"]["reason"]}
+    return {"authorized": True,
+            "command": ["kubectl", *_ctx(context), "exec", "-it", "-n", namespace,
+                        f"pod/{pod}", "-c", container, "--", "/bin/sh"],
+            "redactions": check.get("redactions", [])}
+
+
 def devmode_plan(*, workload: str, namespace: str, local_dir: str, ports: list,
                  dev_image: str = "python:3.12-alpine", run_cmd: str | None = None,
                  context: str | None = None, grant_id: str | None = None) -> dict:
