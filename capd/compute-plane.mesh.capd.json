@@ -1,0 +1,27 @@
+{
+  "capability_id": "caps.compute.mesh-plane@0.1.0",
+  "kind": "compute.placement-plane",
+  "status": "experimental",
+  "name": "Compute plane — one governed door to any substrate",
+  "description": "A user develops on a low-mem box and the same workload scales out, seamlessly, over whatever the mesh offers: a k8s service, an HPC/SLURM supercomputer, WASM at the edge, a p2p/hyperswarm mesh, volunteer compute (BOINC / Folding@home / open-HEP-style), or an RLC-style blockchain compute market. The substrate is chosen by the placement broker from per-project/per-account policy and live mesh availability, scaling out where it can and where volunteer compute is offered. Governed and fail-closed: sensitive workloads never land on an untrusted (volunteer/p2p/blockchain) backend, every placement is sealed, and with no allowed+available backend it falls back to local or blocks rather than shipping work somewhere the policy forbids. Configured in the portal dashboard.",
+  "links": {
+    "broker": "tools/compute_plane.py",
+    "portal": "tools/portal_server.py",
+    "agent_surface": "tools/mcp_ops_server.py",
+    "reference_pattern": "BOINC computing-preferences + IBM Parallel Environment (HPC toolkit) + Docker volume drivers — met and bettered: one governed plane across all substrates, not per-substrate config silos"
+  },
+  "composes_with": {
+    "inner_loop": "caps.dev.devspace-inner-loop@0.1.0",
+    "control_plane": "caps.infra.paas.continuum-local@0.1.0",
+    "scales_up_to": "caps.infra.cluster-scaleup.hyperswarm@0.1.0"
+  },
+  "policy": {
+    "fail_closed": true,
+    "evidence_emitting": true,
+    "sensitive_never_untrusted": true,
+    "per_project_config": true,
+    "per_account_config": true,
+    "read_only_portal": true
+  },
+  "backends": ["local", "k8s", "hpc-slurm", "wasm-edge", "p2p-mesh", "volunteer-boinc", "blockchain-rlc"]
+}

@@ -1,0 +1,24 @@
+{
+  "capability_id": "caps.dev.devspace-inner-loop@0.1.0",
+  "kind": "dev.inner-loop",
+  "status": "experimental",
+  "name": "SourceOS DevSpace — inner-loop dev-environment",
+  "description": "Nocalhost-style inner-loop over the continuum: an isolated per-user namespace, hot code sync into a running workload, a sidecar dev container, and port-forward + local debug — shortening the modify->result feedback loop. Consumes the control plane; surfaced to humans via the portal and to agents via the MCP ops surface (one governed source, two views).",
+  "links": {
+    "portal": "tools/portal_server.py",
+    "agent_surface": "tools/mcp_ops_server.py",
+    "reference_pattern": "Nocalhost DevSpace (inner-loop) — met and bettered: sovereign + evidence-emitting"
+  },
+  "composes_with": {
+    "control_plane": "caps.infra.paas.continuum-local@0.1.0",
+    "operator_surface": "SourceOS-Linux/sourceos-devtools",
+    "compute_plane": "caps.compute.mesh-plane@0.1.0",
+    "scales_up_to": "caps.infra.cluster-scaleup.hyperswarm@0.1.0"
+  },
+  "policy": {
+    "local_first": true,
+    "evidence_emitting": true,
+    "isolation": "per-user-namespace",
+    "read_only_portal": true
+  }
+}
