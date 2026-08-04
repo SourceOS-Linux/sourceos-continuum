@@ -1,0 +1,30 @@
+{
+  "capability_id": "caps.compute.volunteer-mesh-verification@0.1.0",
+  "kind": "compute.volunteer-verification",
+  "status": "experimental",
+  "name": "Volunteer-mesh verification — trust untrusted results by quorum",
+  "description": "How a Folding@home-scale volunteer grid (hundreds of thousands of anonymous, churny, possibly-malicious workers) becomes trustworthy. A Grant proves WHO ran a Work Unit; it cannot prove the RESULT is correct. This plane verifies results fail-closed: a Work Unit is run redundantly on N independent workers and only a result a quorum agrees on (identical output digest) is accepted; stochastic tasks use spot-check canaries with known answers; reliable backends (a cluster, per CluBORun) can stand in as reference verifiers. Reputation is a per-worker verified-success record that weights allocation and routes around bad actors. Implements the Dual-Orchestration PROOF_MODE (redundant | spot_check | tee | zk | optimistic).",
+  "links": {
+    "engine": "tools/work_unit.py",
+    "executor": "tools/executor.py",
+    "placement": "tools/compute_plane.py",
+    "grant_authority": "tools/mcp_a2a_grant.py",
+    "ledger": "artifacts/gate-decisions + mcp-receipts (sealed)",
+    "reference_pattern": "BOINC / Folding@home redundant verification + Science United matchmaking + CluBORun reference-cluster; Dual-Orchestration Model PROOF_MODE"
+  },
+  "composes_with": {
+    "compute_plane": "caps.compute.mesh-plane@0.1.0",
+    "fog": "caps.compute.cloudshell-fog@0.1.0",
+    "control_plane": "caps.infra.paas.continuum-local@0.1.0",
+    "scales_up_to": "caps.infra.cluster-scaleup.hyperswarm@0.1.0"
+  },
+  "policy": {
+    "result_verification": true,
+    "fail_closed": true,
+    "redundant_quorum": true,
+    "spot_check": true,
+    "reputation_weighted": true,
+    "sensitive_never_untrusted": true,
+    "evidence_emitting": true
+  }
+}
